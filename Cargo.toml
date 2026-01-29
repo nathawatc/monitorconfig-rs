@@ -1,0 +1,24 @@
+[package]
+name = "monitor-config"
+version = "1.0.0"
+edition = "2024"
+authors = ["MonitorConfig Contributors"]
+description = "Native Windows CLI tool for managing monitor settings via DDC/CI and WMI"
+license = "MIT"
+
+[dependencies]
+windows-sys = { version = "0.61.2", features = [
+    "Win32_Foundation",
+    "Win32_Graphics_Gdi",
+] }
+clap = { version = "4.5.55", features = ["derive", "cargo"] }
+anyhow = "1.0.100"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
+thiserror = "2.0.18"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true

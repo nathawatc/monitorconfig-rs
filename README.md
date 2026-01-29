@@ -1,46 +1,271 @@
-# MonitorConfig
+# MonitorConfig - Rust CLI
 
-This PowerShell module allows you to manage various monitor settings on Windows computers.  
-Internal displays, like the ones found on laptops are managed with WMI and the only settings that can be adjusted are brightness related.  
-External displays connected via DisplayPort, HDMI, etc. are managed with DDC/CI. Most displays support DDC/CI, but in some cases it needs to be enabled from the On Screen Display. 
-For more information about DDC/CI, see: https://en.wikipedia.org/wiki/Display_Data_Channel
+A native Windows CLI tool for managing monitor settings via DDC/CI and WMI, written in Rust. This is a complete rewrite of the original PowerShell module with improved performance and cross-platform potential.
 
-# Getting started
+## Features
 
-First, install the module from the PowerShell gallery: `Install-Module MonitorConfig`  
-Then check the available commands in the module: `Get-Command -Module MonitorConfig`
+- **List Monitors**: Enumerate all connected monitors
+- **Brightness Control**: Get and set monitor brightness levels
+- **Contrast Control**: Get and set monitor contrast levels
+- **VCP Support**: Full VCP (VESA Command Protocol) feature access
+- **Monitor Capabilities**: Query monitor capabilities string
+- **Settings Management**: Save current settings or reset to factory defaults
+- **JSON Output**: All commands support JSON output for scripting
 
-## EXAMPLES
+## Requirements
 
-### List available monitors
-```powershell
-PS C:\> Get-Monitor
+- Windows 10/11 (uses dxva2.dll and user32.dll)
+- Rust 1.93.0+ (Edition 2024)
+- External monitors must support DDC/CI (enable in monitor OSD if needed)
 
-LogicalDisplay FriendlyName              InstanceName
--------------- ------------              ------------
-\\.\DISPLAY1   Dell S2417DG(DisplayPort) DISPLAY\DELA0E7\5&21071cf6&0&UID12547
-\\.\DISPLAY2   Dell S2417DG(DisplayPort) DISPLAY\DELA0E7\5&21071cf6&0&UID12549
-\\.\DISPLAY3   Generic PnP Monitor       DISPLAY\GSM5788\5&21071cf6&0&UID12544
+## Building
+
+### Prerequisites
+
+Install Rust from [rustup.rs](https://rustup.rs/):
+
+```bash
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
-Note that the friendlyname is provided by the monitor driver, which usually also includes a color profile.
+### Build Release Version
 
-### Turn off a particular display
-```powershell
-PS C:\> Get-Monitor -DeviceName \\.\DISPLAY3 | Set-MonitorVCPValue -VCPCode 0xD6 -Value 4
+```bash
+cd rust-cli
+cargo build --release
 ```
 
-### List all supported VCP codes for the primary display
-```powershell
-PS C:\> Get-Monitor -Primary | Get-MonitorVCPResponse -All
+The compiled binary will be at `target/release/monitor-config.exe`
 
-VCPCode Name                                 CurrentValue MaxValue Description
-------- ----                                 ------------ -------- -----------
-   0x00 Code Page                                       0        0 Returns the Code Page ID number Byte SL.
-   0x02 New Control Value                               1        0 Indicates that a displays MCCS VCP Code register value has changed.
-   0x03 Soft Controls                                   0        0 Allows applications running on the host to use control buttons on the display.
-   0x04 Restore Factory Defaults                        0        0 Restore all factory presets including luminance / contrast, geometry, color and TV defaults.
-   0x05 Restore Factory Luminance / Contras…            0        0 Restores factory defaults for luminance and contrast adjustments.
-   0x08 Restore Factory Color Defaults                  0        0 Restore factory defaults for color settings.
-   0x10 Luminance                                      39      100 Luminance of the image (Brightness control).
+### Install Globally
+
+```bash
+cargo install --path .
 ```
+
+## Usage
+
+### List All Monitors
+
+```bash
+monitor-config list
+
+# JSON output
+monitor-config list --json
+```
+
+### Get Brightness
+
+```bash
+# Primary monitor
+monitor-config get-brightness --primary
+
+# Specific monitor
+monitor-config get-brightness --device "\\.\DISPLAY1"
+
+# JSON output
+monitor-config get-brightness --primary --json
+```
+
+### Set Brightness
+
+```bash
+# Set primary monitor to 50%
+monitor-config set-brightness 50 --primary
+
+# Set specific monitor
+monitor-config set-brightness 75 --device "\\.\DISPLAY1"
+```
+
+### Get Contrast
+
+```bash
+monitor-config get-contrast --primary
+```
+
+### Set Contrast
+
+```bash
+monitor-config set-contrast 60 --primary
+```
+
+### Get VCP Feature
+
+```bash
+# Get brightness (VCP code 0x10)
+monitor-config get-vcp 0x10 --primary
+
+# Get power mode (VCP code 0xD6)
+monitor-config get-vcp 0xD6 --primary --json
+```
+
+### Set VCP Feature
+
+```bash
+# Set brightness via VCP
+monitor-config set-vcp 0x10 75 --primary
+
+# Turn off monitor (power mode = 4)
+monitor-config set-vcp 0xD6 4 --primary
+```
+
+### List Known VCP Codes
+
+```bash
+monitor-config list-vcp
+
+# JSON output
+monitor-config list-vcp --json
+```
+
+### Get Monitor Capabilities
+
+```bash
+monitor-config get-capabilities --primary
+```
+
+### Save Settings
+
+```bash
+# Save current settings to monitor's memory
+monitor-config save-settings --primary
+```
+
+### Reset to Factory Defaults
+
+```bash
+# Reset all settings
+monitor-config reset-defaults --primary
+
+# Reset only color settings
+monitor-config reset-defaults --primary --color-only
+```
+
+## Common VCP Codes
+
+| Code   | Name                  | Description                               |
+|--------|-----------------------|-------------------------------------------|
+| 0x10   | Brightness            | Luminance of the image                    |
+| 0x12   | Contrast              | Contrast of the image                     |
+| 0x14   | Color Temperature     | Select color temperature                  |
+| 0x16   | Red Video Gain        | Red video gain (drive)                    |
+| 0x18   | Green Video Gain      | Green video gain (drive)                  |
+| 0x1A   | Blue Video Gain       | Blue video gain (drive)                   |
+| 0x60   | Input Source          | Select input source                       |
+| 0x62   | Audio Speaker Volume  | Audio speaker volume                      |
+| 0x8D   | Audio Mute            | Audio mute/unmute                         |
+| 0xD6   | Power Mode            | DPM/DPMS status (1=On, 4=Off)            |
+
+## Examples
+
+### Set Multiple Monitors to Same Brightness
+
+```bash
+# List monitors and get device names
+monitor-config list
+
+# Set each monitor
+monitor-config set-brightness 80 --device "\\.\DISPLAY1"
+monitor-config set-brightness 80 --device "\\.\DISPLAY2"
+```
+
+### Turn Off All Monitors
+
+```bash
+# Using VCP power mode command (value 4 = Off)
+monitor-config set-vcp 0xD6 4 --device "\\.\DISPLAY1"
+monitor-config set-vcp 0xD6 4 --device "\\.\DISPLAY2"
+```
+
+### Query Monitor Information
+
+```bash
+# Get all info in JSON format
+monitor-config list --json > monitors.json
+monitor-config get-brightness --primary --json >> monitors.json
+monitor-config get-capabilities --primary >> capabilities.txt
+```
+
+## Technical Details
+
+### Dependencies (Latest Versions)
+
+- `windows = "0.62.2"` - Windows API bindings
+- `clap = "4.5.55"` - Command-line argument parsing
+- `anyhow = "1.0.100"` - Error handling
+- `serde = "1.0.228"` - Serialization framework
+- `serde_json = "1.0.149"` - JSON support
+- `thiserror = "2.0.18"` - Error derive macros
+
+### Architecture
+
+The tool is structured into several modules:
+
+- **native**: Low-level Windows API bindings (dxva2.dll, user32.dll)
+- **monitor**: Monitor abstraction and enumeration
+- **vcp**: VCP (Video Control Panel) feature implementation
+- **cli**: Command-line interface using clap
+- **error**: Centralized error handling
+
+### DDC/CI Support
+
+DDC/CI (Display Data Channel Command Interface) allows software control of monitor settings. Most modern external monitors support it, but it may need to be enabled in the monitor's OSD (On-Screen Display) menu.
+
+#### Troubleshooting DDC/CI
+
+1. Check if DDC/CI is enabled in monitor OSD
+2. Try different cable types (DisplayPort usually works better than HDMI)
+3. Update monitor firmware if available
+4. Some USB-C docks may not support DDC/CI
+
+## Performance
+
+The Rust implementation provides several advantages over the PowerShell module:
+
+- **Faster startup**: No .NET CLR initialization overhead
+- **Lower memory usage**: Compiled binary vs interpreted PowerShell
+- **Native performance**: Direct Windows API calls without managed wrappers
+- **Smaller distribution**: Single ~1MB executable (release build)
+
+## Migration from PowerShell Module
+
+### Command Mapping
+
+| PowerShell Cmdlet               | Rust CLI Command                      |
+|---------------------------------|---------------------------------------|
+| `Get-Monitor`                   | `monitor-config list`                 |
+| `Get-MonitorBrightness`         | `monitor-config get-brightness`       |
+| `Set-MonitorBrightness`         | `monitor-config set-brightness`       |
+| `Get-MonitorVCPResponse`        | `monitor-config get-vcp`              |
+| `Set-MonitorVCPValue`           | `monitor-config set-vcp`              |
+| `Get-MonitorDetails`            | `monitor-config list --json`          |
+| `Save-MonitorSettings`          | `monitor-config save-settings`        |
+| `Reset-MonitorSettings`         | `monitor-config reset-defaults`       |
+
+### Parameter Mapping
+
+| PowerShell Parameter | Rust CLI Option    |
+|----------------------|--------------------|
+| `-DeviceName`        | `--device`         |
+| `-Primary`           | `--primary`        |
+| `-VCPCode`           | First positional   |
+| `-Value`             | Second positional  |
+
+## License
+
+This project follows the same license as the original MonitorConfig PowerShell module (see LICENSE file).
+
+## Contributing
+
+Contributions are welcome! Areas for improvement:
+
+- [ ] Add WMI support for laptop internal displays
+- [ ] Add Windows notification integration
+- [ ] Add configuration file support
+- [ ] Add monitor profile save/restore
+- [ ] Add scripting/automation examples
+- [ ] Cross-platform support exploration (Linux/macOS DDC support)
+
+## Acknowledgments
+
+Based on the [MonitorConfig PowerShell Module](https://github.com/MartinGC94/MonitorConfig) by Martin Gräßlin.
