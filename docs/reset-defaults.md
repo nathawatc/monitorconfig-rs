@@ -1,36 +1,85 @@
----
-external help file: MonitorConfig.dll-Help.xml
-Module Name: MonitorConfig
-online version:
-schema: 2.0.0
----
-
-# Reset-MonitorSettings
+# reset-defaults - Reset Monitor to Factory Defaults
 
 ## SYNOPSIS
-Resets various monitor settings to their factory defaults.
+
+Resets monitor settings to factory default values.
 
 ## SYNTAX
 
-```
-Reset-MonitorSettings -Monitor <VCPMonitor[]> [-Kind] <ResetKind> [-WhatIf] [-Confirm] [<CommonParameters>]
+```bash
+monitor-config reset-defaults [OPTIONS]
 ```
 
 ## DESCRIPTION
-Resets various monitor settings to their factory defaults.
+
+The `reset-defaults` command resets monitor settings to their factory default values. You can choose to reset all settings or only color-related settings.
+
+This uses VCP codes:
+
+- 0x04 - Restore Factory Defaults (all settings)
+- 0x08 - Restore Factory Color Defaults (color only)
+
+**Warning:** This will reset all or most monitor settings. Make sure to save any custom configurations beforehand if needed.
+
+## OPTIONS
+
+### `-d, --device <DEVICE>`
+
+Specify the monitor by device name (e.g., `\\.\DISPLAY1`) or friendly name (e.g., "Dell U2723DE").
+
+**Type:** String  
+**Required:** No (defaults to primary monitor)
+
+### `-p, --primary`
+
+Target the primary monitor.
+
+**Type:** Flag  
+**Required:** No
+
+### `-c, --color-only`
+
+Reset only color-related settings instead of all settings.
+
+**Type:** Flag  
+**Required:** No
 
 ## EXAMPLES
 
-### Example 1
-```powershell
-PS C:\> Get-Monitor -DeviceName \\.\DISPLAY1 | Reset-MonitorSettings -Kind Colors
+### Example 1: Reset all settings to factory defaults
+
+```bash
+monitor-config reset-defaults --primary
 ```
 
-Resets all color settings for Display1.
+Output:
+
+```text
+Monitor reset to factory defaults
+```
+
+### Example 2: Reset only color settings
+
+```bash
+monitor-config reset-defaults --primary --color-only
+```
+
+Output:
+
+```text
+Monitor color settings reset to factory defaults
+```
+
+### Example 3: Reset specific monitor
+
+```bash
+monitor-config reset-defaults --device "\\.\DISPLAY2"
+```
 
 ## PARAMETERS
 
 ### -Confirm
+
 Prompts you for confirmation before running the cmdlet.
 
 ```yaml
@@ -46,6 +95,7 @@ Accept wildcard characters: False
 ```
 
 ### -Kind
+
 The settings that should be reset.
 
 ```yaml
@@ -62,6 +112,7 @@ Accept wildcard characters: False
 ```
 
 ### -Monitor
+
 The monitor(s) to reset settings on.
 
 ```yaml
@@ -77,6 +128,7 @@ Accept wildcard characters: False
 ```
 
 ### -WhatIf
+
 Shows what would happen if the cmdlet runs.
 The cmdlet is not run.
 
@@ -93,6 +145,7 @@ Accept wildcard characters: False
 ```
 
 ### CommonParameters
+
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
@@ -102,6 +155,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## OUTPUTS
 
 ### System.Object
+
 ## NOTES
 
 ## RELATED LINKS
