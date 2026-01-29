@@ -7,7 +7,7 @@ Resets monitor settings to factory default values.
 ## SYNTAX
 
 ```bash
-monitor-config reset-defaults [OPTIONS]
+monitorconfig reset-defaults [OPTIONS]
 ```
 
 ## DESCRIPTION
@@ -49,7 +49,7 @@ Reset only color-related settings instead of all settings.
 ### Example 1: Reset all settings to factory defaults
 
 ```bash
-monitor-config reset-defaults --primary
+monitorconfig reset-defaults --primary
 ```
 
 Output:
@@ -61,7 +61,7 @@ Monitor reset to factory defaults
 ### Example 2: Reset only color settings
 
 ```bash
-monitor-config reset-defaults --primary --color-only
+monitorconfig reset-defaults --primary --color-only
 ```
 
 Output:
@@ -73,7 +73,7 @@ Monitor color settings reset to factory defaults
 ### Example 3: Reset specific monitor
 
 ```bash
-monitor-config reset-defaults --device "\\.\DISPLAY2"
+monitorconfig reset-defaults --device "\\.\DISPLAY2"
 ```
 
 ## PARAMETERS

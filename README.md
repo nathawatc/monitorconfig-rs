@@ -1,6 +1,6 @@
 # MonitorConfig - Rust CLI
 
-A native Windows CLI tool for managing monitor settings via DDC/CI and WMI, written in Rust. This is a complete rewrite of the original PowerShell module with improved performance and cross-platform potential.
+A native Windows CLI tool for managing monitor settings via DDC/CI and WMI, written in Rust. This is a complete rewrite of the original PowerShell module.
 
 ## Features
 
@@ -35,7 +35,7 @@ cd rust-cli
 cargo build --release
 ```
 
-The compiled binary will be at `target/release/monitor-config.exe`
+The compiled binary will be at `target/release/monitorconfig.exe`
 
 ### Install Globally
 
@@ -48,88 +48,88 @@ cargo install --path .
 ### List All Monitors
 
 ```bash
-monitor-config list
+monitorconfig list
 
 # JSON output
-monitor-config list --json
+monitorconfig list --json
 ```
 
 ### Get Brightness
 
 ```bash
 # Primary monitor
-monitor-config get-brightness --primary
+monitorconfig get-brightness --primary
 
 # Specific monitor
-monitor-config get-brightness --device "\\.\DISPLAY1"
+monitorconfig get-brightness --device "\\.\DISPLAY1"
 
 # JSON output
-monitor-config get-brightness --primary --json
+monitorconfig get-brightness --primary --json
 ```
 
 ### Set Brightness
 
 ```bash
 # Set primary monitor to 50%
-monitor-config set-brightness 50 --primary
+monitorconfig set-brightness 50 --primary
 
 # Set specific monitor
-monitor-config set-brightness 75 --device "\\.\DISPLAY1"
+monitorconfig set-brightness 75 --device "\\.\DISPLAY1"
 ```
 
 ### Get Contrast
 
 ```bash
-monitor-config get-contrast --primary
+monitorconfig get-contrast --primary
 ```
 
 ### Set Contrast
 
 ```bash
-monitor-config set-contrast 60 --primary
+monitorconfig set-contrast 60 --primary
 ```
 
 ### Get VCP Feature
 
 ```bash
 # Get brightness (VCP code 0x10)
-monitor-config get-vcp 0x10 --primary
+monitorconfig get-vcp 0x10 --primary
 
 # Get power mode (VCP code 0xD6)
-monitor-config get-vcp 0xD6 --primary --json
+monitorconfig get-vcp 0xD6 --primary --json
 ```
 
 ### Set VCP Feature
 
 ```bash
 # Set brightness via VCP
-monitor-config set-vcp 0x10 75 --primary
+monitorconfig set-vcp 0x10 75 --primary
 
 # Turn off monitor (power mode = 4)
-monitor-config set-vcp 0xD6 4 --primary
+monitorconfig set-vcp 0xD6 4 --primary
 ```
 
 ### List Known VCP Codes
 
 ```bash
 # Show reference list of common VCP codes
-monitor-config list-vcp
+monitorconfig list-vcp
 
 # JSON output
-monitor-config list-vcp --json
+monitorconfig list-vcp --json
 ```
 
 ### Scan Monitor for All Supported VCP Codes
 
 ```bash
 # Scan primary monitor for all supported VCP codes
-monitor-config scan-vcp --primary
+monitorconfig scan-vcp --primary
 
 # Scan specific monitor
-monitor-config scan-vcp --device "\\.\DISPLAY1"
+monitorconfig scan-vcp --device "\\.\DISPLAY1"
 
 # JSON output for scripting
-monitor-config scan-vcp --primary --json
+monitorconfig scan-vcp --primary --json
 ```
 
 **Note**: `list-vcp` shows a reference list of common VCP codes, while `scan-vcp` actively queries your monitor to discover which codes it actually supports (similar to PowerShell's `Get-MonitorVCPResponse -All`).
@@ -137,40 +137,40 @@ monitor-config scan-vcp --primary --json
 ### Get Monitor Capabilities
 
 ```bash
-monitor-config get-capabilities --primary
+monitorconfig get-capabilities --primary
 ```
 
 ### Save Settings
 
 ```bash
 # Save current settings to monitor's memory
-monitor-config save-settings --primary
+monitorconfig save-settings --primary
 ```
 
 ### Reset to Factory Defaults
 
 ```bash
 # Reset all settings
-monitor-config reset-defaults --primary
+monitorconfig reset-defaults --primary
 
 # Reset only color settings
-monitor-config reset-defaults --primary --color-only
+monitorconfig reset-defaults --primary --color-only
 ```
 
 ## Common VCP Codes
 
-| Code   | Name                  | Description                               |
-|--------|-----------------------|-------------------------------------------|
-| 0x10   | Brightness            | Luminance of the image                    |
-| 0x12   | Contrast              | Contrast of the image                     |
-| 0x14   | Color Temperature     | Select color temperature                  |
-| 0x16   | Red Video Gain        | Red video gain (drive)                    |
-| 0x18   | Green Video Gain      | Green video gain (drive)                  |
-| 0x1A   | Blue Video Gain       | Blue video gain (drive)                   |
-| 0x60   | Input Source          | Select input source                       |
-| 0x62   | Audio Speaker Volume  | Audio speaker volume                      |
-| 0x8D   | Audio Mute            | Audio mute/unmute                         |
-| 0xD6   | Power Mode            | DPM/DPMS status (1=On, 4=Off)            |
+| Code | Name                 | Description                   |
+| ---- | -------------------- | ----------------------------- |
+| 0x10 | Brightness           | Luminance of the image        |
+| 0x12 | Contrast             | Contrast of the image         |
+| 0x14 | Color Temperature    | Select color temperature      |
+| 0x16 | Red Video Gain       | Red video gain (drive)        |
+| 0x18 | Green Video Gain     | Green video gain (drive)      |
+| 0x1A | Blue Video Gain      | Blue video gain (drive)       |
+| 0x60 | Input Source         | Select input source           |
+| 0x62 | Audio Speaker Volume | Audio speaker volume          |
+| 0x8D | Audio Mute           | Audio mute/unmute             |
+| 0xD6 | Power Mode           | DPM/DPMS status (1=On, 4=Off) |
 
 ## Examples
 
@@ -178,28 +178,28 @@ monitor-config reset-defaults --primary --color-only
 
 ```bash
 # List monitors and get device names
-monitor-config list
+monitorconfig list
 
 # Set each monitor
-monitor-config set-brightness 80 --device "\\.\DISPLAY1"
-monitor-config set-brightness 80 --device "\\.\DISPLAY2"
+monitorconfig set-brightness 80 --device "\\.\DISPLAY1"
+monitorconfig set-brightness 80 --device "\\.\DISPLAY2"
 ```
 
 ### Turn Off All Monitors
 
 ```bash
 # Using VCP power mode command (value 4 = Off)
-monitor-config set-vcp 0xD6 4 --device "\\.\DISPLAY1"
-monitor-config set-vcp 0xD6 4 --device "\\.\DISPLAY2"
+monitorconfig set-vcp 0xD6 4 --device "\\.\DISPLAY1"
+monitorconfig set-vcp 0xD6 4 --device "\\.\DISPLAY2"
 ```
 
 ### Query Monitor Information
 
 ```bash
 # Get all info in JSON format
-monitor-config list --json > monitors.json
-monitor-config get-brightness --primary --json >> monitors.json
-monitor-config get-capabilities --primary >> capabilities.txt
+monitorconfig list --json > monitors.json
+monitorconfig get-brightness --primary --json >> monitors.json
+monitorconfig get-capabilities --primary >> capabilities.txt
 ```
 
 ## Technical Details
@@ -247,25 +247,25 @@ The Rust implementation provides several advantages over the PowerShell module:
 
 ### Command Mapping
 
-| PowerShell Cmdlet               | Rust CLI Command                      |
-|---------------------------------|---------------------------------------|
-| `Get-Monitor`                   | `monitor-config list`                 |
-| `Get-MonitorBrightness`         | `monitor-config get-brightness`       |
-| `Set-MonitorBrightness`         | `monitor-config set-brightness`       |
-| `Get-MonitorVCPResponse`        | `monitor-config get-vcp`              |
-| `Set-MonitorVCPValue`           | `monitor-config set-vcp`              |
-| `Get-MonitorDetails`            | `monitor-config list --json`          |
-| `Save-MonitorSettings`          | `monitor-config save-settings`        |
-| `Reset-MonitorSettings`         | `monitor-config reset-defaults`       |
+| PowerShell Cmdlet        | Rust CLI Command                |
+| ------------------------ | ------------------------------- |
+| `Get-Monitor`            | `monitorconfig list`           |
+| `Get-MonitorBrightness`  | `monitorconfig get-brightness` |
+| `Set-MonitorBrightness`  | `monitorconfig set-brightness` |
+| `Get-MonitorVCPResponse` | `monitorconfig get-vcp`        |
+| `Set-MonitorVCPValue`    | `monitorconfig set-vcp`        |
+| `Get-MonitorDetails`     | `monitorconfig list --json`    |
+| `Save-MonitorSettings`   | `monitorconfig save-settings`  |
+| `Reset-MonitorSettings`  | `monitorconfig reset-defaults` |
 
 ### Parameter Mapping
 
-| PowerShell Parameter | Rust CLI Option    |
-|----------------------|--------------------|
-| `-DeviceName`        | `--device`         |
-| `-Primary`           | `--primary`        |
-| `-VCPCode`           | First positional   |
-| `-Value`             | Second positional  |
+| PowerShell Parameter | Rust CLI Option   |
+| -------------------- | ----------------- |
+| `-DeviceName`        | `--device`        |
+| `-Primary`           | `--primary`       |
+| `-VCPCode`           | First positional  |
+| `-Value`             | Second positional |
 
 ## License
 
@@ -276,10 +276,8 @@ This project follows the same license as the original MonitorConfig PowerShell m
 Contributions are welcome! Areas for improvement:
 
 - [ ] Add WMI support for laptop internal displays
-- [ ] Add Windows notification integration
 - [ ] Add configuration file support
 - [ ] Add monitor profile save/restore
-- [ ] Add scripting/automation examples
 - [ ] Cross-platform support exploration (Linux/macOS DDC support)
 
 ## Acknowledgments

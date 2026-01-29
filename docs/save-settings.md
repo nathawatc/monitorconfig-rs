@@ -7,7 +7,7 @@ Saves the current monitor settings to the monitor's non-volatile memory.
 ## SYNTAX
 
 ```bash
-monitor-config save-settings [OPTIONS]
+monitorconfig save-settings [OPTIONS]
 ```
 
 ## DESCRIPTION
@@ -37,7 +37,7 @@ Target the primary monitor.
 ### Example 1: Save settings on primary monitor
 
 ```bash
-monitor-config save-settings --primary
+monitorconfig save-settings --primary
 ```
 
 Output:
@@ -50,17 +50,17 @@ Monitor settings saved
 
 ```bash
 # Make adjustments
-monitor-config set-brightness 80 --primary
-monitor-config set-contrast 65 --primary
+monitorconfig set-brightness 80 --primary
+monitorconfig set-contrast 65 --primary
 
 # Save the changes
-monitor-config save-settings --primary
+monitorconfig save-settings --primary
 ```
 
 ### Example 3: Save settings on specific monitor
 
 ```bash
-monitor-config save-settings --device "\\.\DISPLAY2"
+monitorconfig save-settings --device "\\.\DISPLAY2"
 ```
 
 ## PARAMETERS

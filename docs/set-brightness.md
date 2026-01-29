@@ -7,7 +7,7 @@ Sets the brightness level on the specified monitor.
 ## SYNTAX
 
 ```bash
-monitor-config set-brightness <VALUE> [OPTIONS]
+monitorconfig set-brightness <VALUE> [OPTIONS]
 ```
 
 ## DESCRIPTION
@@ -44,7 +44,7 @@ Target the primary monitor.
 ### Example 1: Set brightness of primary monitor
 
 ```bash
-monitor-config set-brightness 75 --primary
+monitorconfig set-brightness 75 --primary
 ```
 
 Output:
@@ -56,15 +56,15 @@ Brightness set to 75
 ### Example 2: Set brightness of specific monitor
 
 ```bash
-monitor-config set-brightness 50 --device "\\.\DISPLAY2"
+monitorconfig set-brightness 50 --device "\\.\DISPLAY2"
 ```
 
 ### Example 3: Set all monitors to the same brightness
 
 ```bash
 # Set brightness for each monitor individually
-monitor-config set-brightness 80 --device "\\.\DISPLAY1"
-monitor-config set-brightness 80 --device "\\.\DISPLAY2"
+monitorconfig set-brightness 80 --device "\\.\DISPLAY1"
+monitorconfig set-brightness 80 --device "\\.\DISPLAY2"
 ```
 
 ## PARAMETERS

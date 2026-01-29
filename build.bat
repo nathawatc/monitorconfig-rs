@@ -1,5 +1,5 @@
 @echo off
-REM Build script for monitor-config on Windows
+REM Build script for monitorconfig on Windows
 
 echo Building MonitorConfig Rust CLI...
 echo ==================================
@@ -30,11 +30,11 @@ if %ERRORLEVEL% NEQ 0 (
 echo.
 echo Build complete!
 echo.
-echo Binary location: target\release\monitor-config.exe
+echo Binary location: target\release\monitorconfig.exe
 echo.
 
 REM Show binary size
-for %%A in (target\release\monitor-config.exe) do echo Binary size: %%~zA bytes
+for %%A in (target\release\monitorconfig.exe) do echo Binary size: %%~zA bytes
 echo.
 echo To install globally, run: cargo install --path .
 echo.
@@ -42,6 +42,6 @@ echo.
 REM Run basic check
 echo Running basic functionality check...
 echo.
-target\release\monitor-config.exe --version
+target\release\monitorconfig.exe --version
 echo.
-echo To test the tool, run: target\release\monitor-config.exe list
+echo To test the tool, run: target\release\monitorconfig.exe list

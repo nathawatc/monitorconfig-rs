@@ -7,7 +7,7 @@ Returns brightness details (minimum, maximum, and current value) for the specifi
 ## SYNTAX
 
 ```bash
-monitor-config get-brightness [OPTIONS]
+monitorconfig get-brightness [OPTIONS]
 ```
 
 ## DESCRIPTION
@@ -42,7 +42,7 @@ Output brightness information in JSON format.
 ### Example 1: Get brightness of primary monitor
 
 ```bash
-monitor-config get-brightness --primary
+monitorconfig get-brightness --primary
 ```
 
 Output:
@@ -54,13 +54,13 @@ Current brightness: 75 (min: 0, max: 100)
 ### Example 2: Get brightness of specific monitor
 
 ```bash
-monitor-config get-brightness --device "\\.\DISPLAY2"
+monitorconfig get-brightness --device "\\.\DISPLAY2"
 ```
 
 ### Example 3: Get brightness in JSON format
 
 ```bash
-monitor-config get-brightness --primary --json
+monitorconfig get-brightness --primary --json
 ```
 
 Output:
@@ -76,7 +76,7 @@ Output:
 ### Example 4: Get brightness using friendly name
 
 ```bash
-monitor-config get-brightness --device "Dell U2723DE"
+monitorconfig get-brightness --device "Dell U2723DE"
 ```
 
 ## OUTPUT

@@ -2,7 +2,7 @@ use crate::{Result, monitor, monitor::Monitor, vcp};
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
-#[command(name = "monitor-config")]
+#[command(name = "monitorconfig")]
 #[command(author, version, about = "Native Windows CLI tool for managing monitor settings", long_about = None)]
 pub struct Cli {
     #[command(subcommand)]

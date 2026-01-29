@@ -9,13 +9,13 @@ Query monitor VCP (VESA Command Protocol) feature codes.
 ### Get specific VCP code
 
 ```bash
-monitor-config get-vcp <CODE> [OPTIONS]
+monitorconfig get-vcp <CODE> [OPTIONS]
 ```
 
 ### Scan all supported VCP codes
 
 ```bash
-monitor-config scan-vcp [OPTIONS]
+monitorconfig scan-vcp [OPTIONS]
 ```
 
 ## DESCRIPTION
@@ -62,7 +62,7 @@ Output in JSON format.
 ### Example 1: Get brightness using VCP code
 
 ```bash
-monitor-config get-vcp 0x10 --primary
+monitorconfig get-vcp 0x10 --primary
 ```
 
 Output:
@@ -77,13 +77,13 @@ Type: Continuous
 ### Example 2: Get input source
 
 ```bash
-monitor-config get-vcp 0x60 --device "\\.\DISPLAY1"
+monitorconfig get-vcp 0x60 --device "\\.\DISPLAY1"
 ```
 
 ### Example 3: Scan all supported VCP codes
 
 ```bash
-monitor-config scan-vcp --primary
+monitorconfig scan-vcp --primary
 ```
 
 Output:

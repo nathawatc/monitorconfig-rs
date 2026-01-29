@@ -1,5 +1,5 @@
 #!/bin/bash
-# Build script for monitor-config
+# Build script for monitorconfig
 
 set -e
 
@@ -19,16 +19,30 @@ rustc --version
 cargo --version
 echo ""
 
+# Check if cross-compilation toolchain is installed
+if ! command -v x86_64-w64-mingw32-gcc &> /dev/null; then
+    echo "Warning: MinGW-w64 cross-compilation toolchain not found."
+    echo "To install, run:"
+    echo "  sudo apt-get install gcc-mingw-w64-x86-64 -y  # Debian/Ubuntu"
+    echo "  or use your distro's package manager (e.g., pacman -S mingw-w64-x86_64-gcc for Arch)"
+    echo ""
+fi
+
+# Add Windows target if not already installed
+echo "Adding Windows target..."
+rustup target add x86_64-pc-windows-gnu
+echo ""
+
 # Build in release mode
-echo "Building in release mode..."
-cargo build --release
+echo "Building in release mode for Windows..."
+cargo build --target x86_64-pc-windows-gnu --release
 
 echo ""
 echo "Build complete!"
 echo ""
-echo "Binary location: target/release/monitor-config.exe"
+echo "Binary location: target/x86_64-pc-windows-gnu/release/monitorconfig.exe"
 echo "Binary size:"
-ls -lh target/release/monitor-config.exe | awk '{print $5}'
+ls -lh target/x86_64-pc-windows-gnu/release/monitorconfig.exe | awk '{print $5}'
 echo ""
 echo "To install globally, run: cargo install --path ."
 echo ""
@@ -36,6 +50,6 @@ echo ""
 # Run basic check
 echo "Running basic functionality check..."
 echo ""
-./target/release/monitor-config.exe --version
+./target/x86_64-pc-windows-gnu/release/monitorconfig.exe --version
 echo ""
-echo "To test the tool, run: ./target/release/monitor-config.exe list"
+echo "To test the tool, run: ./target/x86_64-pc-windows-gnu/release/monitorconfig.exe list"

@@ -9,13 +9,13 @@ Retrieve color and contrast information from the monitor.
 ### Get contrast
 
 ```bash
-monitor-config get-contrast [OPTIONS]
+monitorconfig get-contrast [OPTIONS]
 ```
 
 ### Get individual color values via VCP
 
 ```bash
-monitor-config get-vcp <CODE> [OPTIONS]
+monitorconfig get-vcp <CODE> [OPTIONS]
 ```
 
 ## DESCRIPTION
@@ -27,16 +27,16 @@ The Rust CLI provides color setting access through multiple commands:
 
 ## COMMON COLOR VCP CODES
 
-| Code | Name | Description |
-|------|------|-------------|
-| 0x12 | Contrast | Contrast level |
+| Code | Name              | Description                 |
+| ---- | ----------------- | --------------------------- |
+| 0x12 | Contrast          | Contrast level              |
 | 0x14 | Color Temperature | Color temperature selection |
-| 0x16 | Red Video Gain | Red gain/tint |
-| 0x18 | Green Video Gain | Green gain/tint |
-| 0x1A | Blue Video Gain | Blue gain/tint |
-| 0x6C | Red Black Level | Red drive/black level |
-| 0x6E | Green Black Level | Green drive/black level |
-| 0x70 | Blue Black Level | Blue drive/black level |
+| 0x16 | Red Video Gain    | Red gain/tint               |
+| 0x18 | Green Video Gain  | Green gain/tint             |
+| 0x1A | Blue Video Gain   | Blue gain/tint              |
+| 0x6C | Red Black Level   | Red drive/black level       |
+| 0x6E | Green Black Level | Green drive/black level     |
+| 0x70 | Blue Black Level  | Blue drive/black level      |
 
 ## OPTIONS
 
@@ -66,7 +66,7 @@ Output in JSON format.
 ### Example 1: Get contrast
 
 ```bash
-monitor-config get-contrast --primary
+monitorconfig get-contrast --primary
 ```
 
 Output:

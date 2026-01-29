@@ -7,7 +7,7 @@ Sets the value of a specified VCP (VESA Command Protocol) feature code.
 ## SYNTAX
 
 ```bash
-monitor-config set-vcp <CODE> <VALUE> [OPTIONS]
+monitorconfig set-vcp <CODE> <VALUE> [OPTIONS]
 ```
 
 ## DESCRIPTION
@@ -51,7 +51,7 @@ Target the primary monitor.
 ### Example 1: Set brightness using VCP code
 
 ```bash
-monitor-config set-vcp 0x10 75 --primary
+monitorconfig set-vcp 0x10 75 --primary
 ```
 
 Output:
@@ -64,21 +64,21 @@ VCP code 0x10 set to 75
 
 ```bash
 # Set input source to HDMI (value may vary by monitor)
-monitor-config set-vcp 0x60 3 --device "\\.\DISPLAY1"
+monitorconfig set-vcp 0x60 3 --device "\\.\DISPLAY1"
 ```
 
 ### Example 3: Turn off monitor
 
 ```bash
 # VCP code 0xD6 (Power Mode): 1=On, 4=Off
-monitor-config set-vcp 0xD6 4 --primary
+monitorconfig set-vcp 0xD6 4 --primary
 ```
 
 ### Example 4: Set color temperature
 
 ```bash
 # VCP code 0x14 (Color Temperature)
-monitor-config set-vcp 0x14 6500 --primary
+monitorconfig set-vcp 0x14 6500 --primary
 ```
 
 ## PARAMETERS

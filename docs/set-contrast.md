@@ -9,13 +9,13 @@ Adjust color and contrast settings on the monitor.
 ### Set contrast
 
 ```bash
-monitor-config set-contrast <VALUE> [OPTIONS]
+monitorconfig set-contrast <VALUE> [OPTIONS]
 ```
 
 ### Set individual color values via VCP
 
 ```bash
-monitor-config set-vcp <CODE> <VALUE> [OPTIONS]
+monitorconfig set-vcp <CODE> <VALUE> [OPTIONS]
 ```
 
 ## DESCRIPTION
@@ -27,18 +27,18 @@ The Rust CLI provides color setting adjustment through multiple commands:
 
 ## COMMON COLOR VCP CODES
 
-| Code | Name | Description | Typical Range |
-|------|------|-------------|---------------|
-| 0x12 | Contrast | Contrast level | 0-100 |
-| 0x14 | Color Temperature | Color temperature | Varies by monitor |
-| 0x16 | Red Video Gain | Red gain/tint | 0-100 |
-| 0x18 | Green Video Gain | Green gain/tint | 0-100 |
-| 0x1A | Blue Video Gain | Blue gain/tint | 0-100 |
-| 0x6C | Red Black Level | Red drive/black level | 0-100 |
-| 0x6E | Green Black Level | Green drive/black level | 0-100 |
-| 0x70 | Blue Black Level | Blue drive/black level | 0-100 |
-| 0x8A | Color Saturation | Overall color saturation | 0-100 |
-| 0x5B | Gamma | Gamma adjustment | Varies |
+| Code | Name              | Description              | Typical Range     |
+| ---- | ----------------- | ------------------------ | ----------------- |
+| 0x12 | Contrast          | Contrast level           | 0-100             |
+| 0x14 | Color Temperature | Color temperature        | Varies by monitor |
+| 0x16 | Red Video Gain    | Red gain/tint            | 0-100             |
+| 0x18 | Green Video Gain  | Green gain/tint          | 0-100             |
+| 0x1A | Blue Video Gain   | Blue gain/tint           | 0-100             |
+| 0x6C | Red Black Level   | Red drive/black level    | 0-100             |
+| 0x6E | Green Black Level | Green drive/black level  | 0-100             |
+| 0x70 | Blue Black Level  | Blue drive/black level   | 0-100             |
+| 0x8A | Color Saturation  | Overall color saturation | 0-100             |
+| 0x5B | Gamma             | Gamma adjustment         | Varies            |
 
 ## ARGUMENTS
 
@@ -77,7 +77,7 @@ Target the primary monitor.
 ### Example 1: Set contrast
 
 ```bash
-monitor-config set-contrast 60 --primary
+monitorconfig set-contrast 60 --primary
 ```
 
 Output:

@@ -7,7 +7,7 @@ Enumerates all active physical monitors connected to the system.
 ## SYNTAX
 
 ```bash
-monitor-config list [OPTIONS]
+monitorconfig list [OPTIONS]
 ```
 
 ## DESCRIPTION
@@ -28,7 +28,7 @@ Output monitor information in JSON format.
 ### Example 1: List all monitors in table format
 
 ```bash
-monitor-config list
+monitorconfig list
 ```
 
 Displays all connected monitors in a human-readable table format:
@@ -37,13 +37,13 @@ Displays all connected monitors in a human-readable table format:
 Device Name          Friendly Name                  Primary
 ----------------------------------------------------------------------
 \\.\DISPLAY1         Dell U2723DE                   Yes
-\\.\DISPLAY2         Samsung S27F350                
+\\.\DISPLAY2         Samsung S27F350
 ```
 
 ### Example 2: List monitors in JSON format
 
 ```bash
-monitor-config list --json
+monitorconfig list --json
 ```
 
 Outputs monitor information as JSON for scripting:
@@ -67,10 +67,10 @@ Outputs monitor information as JSON for scripting:
 
 ```bash
 # First, list monitors to see their device names
-monitor-config list
+monitorconfig list
 
 # Then set brightness on a specific monitor
-monitor-config set-brightness 50 --device "\\.\DISPLAY1"
+monitorconfig set-brightness 50 --device "\\.\DISPLAY1"
 ```
 
 ## OUTPUT

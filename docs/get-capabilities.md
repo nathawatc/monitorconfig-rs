@@ -7,7 +7,7 @@ Returns the DDC/CI capabilities string from the specified monitor.
 ## SYNTAX
 
 ```bash
-monitor-config get-capabilities [OPTIONS]
+monitorconfig get-capabilities [OPTIONS]
 ```
 
 ## DESCRIPTION
@@ -37,7 +37,7 @@ Target the primary monitor.
 ### Example 1: Get capabilities of primary monitor
 
 ```bash
-monitor-config get-capabilities --primary
+monitorconfig get-capabilities --primary
 ```
 
 Output (example):
