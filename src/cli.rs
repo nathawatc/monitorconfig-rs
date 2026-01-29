@@ -20,7 +20,7 @@ pub enum Commands {
 
     /// Get brightness level of a monitor
     GetBrightness {
-        /// Device name (e.g., \\.\DISPLAY1) or use --primary
+        /// Device name or friendly name (e.g., \\.\DISPLAY1 or "Dell U2723DE") or use --primary
         #[arg(short, long)]
         device: Option<String>,
 
@@ -38,7 +38,7 @@ pub enum Commands {
         /// Brightness value (0-100)
         value: u32,
 
-        /// Device name (e.g., \\.\DISPLAY1) or use --primary
+        /// Device name or friendly name (e.g., \\.\DISPLAY1 or "Dell U2723DE") or use --primary
         #[arg(short, long)]
         device: Option<String>,
 
@@ -49,7 +49,7 @@ pub enum Commands {
 
     /// Get contrast level of a monitor
     GetContrast {
-        /// Device name (e.g., \\.\DISPLAY1) or use --primary
+        /// Device name or friendly name (e.g., \\.\DISPLAY1 or "Dell U2723DE") or use --primary
         #[arg(short, long)]
         device: Option<String>,
 
@@ -67,7 +67,7 @@ pub enum Commands {
         /// Contrast value (0-100)
         value: u32,
 
-        /// Device name (e.g., \\.\DISPLAY1) or use --primary
+        /// Device name or friendly name (e.g., \\.\DISPLAY1 or "Dell U2723DE") or use --primary
         #[arg(short, long)]
         device: Option<String>,
 
@@ -82,7 +82,7 @@ pub enum Commands {
         #[arg(value_parser = parse_hex)]
         code: u8,
 
-        /// Device name (e.g., \\.\DISPLAY1) or use --primary
+        /// Device name or friendly name (e.g., \\.\DISPLAY1 or "Dell U2723DE") or use --primary
         #[arg(short, long)]
         device: Option<String>,
 
@@ -104,7 +104,7 @@ pub enum Commands {
         /// Value to set
         value: u32,
 
-        /// Device name (e.g., \\.\DISPLAY1) or use --primary
+        /// Device name or friendly name (e.g., \\.\DISPLAY1 or "Dell U2723DE") or use --primary
         #[arg(short, long)]
         device: Option<String>,
 
@@ -122,7 +122,7 @@ pub enum Commands {
 
     /// Scan monitor for all supported VCP codes
     ScanVcp {
-        /// Device name (e.g., \\.\DISPLAY1) or use --primary
+        /// Device name or friendly name (e.g., \\.\DISPLAY1 or "Dell U2723DE") or use --primary
         #[arg(short, long)]
         device: Option<String>,
 
@@ -137,7 +137,7 @@ pub enum Commands {
 
     /// Get monitor capabilities string
     GetCapabilities {
-        /// Device name (e.g., \\.\DISPLAY1) or use --primary
+        /// Device name or friendly name (e.g., \\.\DISPLAY1 or "Dell U2723DE") or use --primary
         #[arg(short, long)]
         device: Option<String>,
 
@@ -148,7 +148,7 @@ pub enum Commands {
 
     /// Save current monitor settings
     SaveSettings {
-        /// Device name (e.g., \\.\DISPLAY1) or use --primary
+        /// Device name or friendly name (e.g., \\.\DISPLAY1 or "Dell U2723DE") or use --primary
         #[arg(short, long)]
         device: Option<String>,
 
@@ -159,7 +159,7 @@ pub enum Commands {
 
     /// Reset monitor to factory defaults
     ResetDefaults {
-        /// Device name (e.g., \\.\DISPLAY1) or use --primary
+        /// Device name or friendly name (e.g., \\.\DISPLAY1 or "Dell U2723DE") or use --primary
         #[arg(short, long)]
         device: Option<String>,
 
@@ -368,25 +368,28 @@ fn list_vcp(json: bool) -> Result<()> {
 fn scan_vcp(device: Option<String>, primary: bool, json: bool) -> Result<()> {
     let mon = get_monitor(device, primary)?;
     let vcp_mon = vcp::VcpMonitor::new(mon.handle());
-    
+
     if !json {
         eprintln!("Scanning monitor for supported VCP codes...");
     }
-    
+
     let features = vcp_mon.scan_vcp_features();
-    
+
     if json {
         println!("{}", serde_json::to_string_pretty(&features)?);
     } else {
         eprintln!("Found {} supported VCP codes\n", features.len());
-        println!("{:<6} {:<35} {:<12} {:<8} {}", "Code", "Name", "CurrentValue", "MaxValue", "Description");
+        println!(
+            "{:<6} {:<35} {:<12} {:<8} {}",
+            "Code", "Name", "CurrentValue", "MaxValue", "Description"
+        );
         println!("{}", "-".repeat(120));
-        
+
         for response in features {
             let info = vcp::get_vcp_code_info(response.vcp_code);
             let name = info.map(|i| i.name).unwrap_or("Unknown");
             let description = info.map(|i| i.description).unwrap_or("");
-            
+
             println!(
                 "0x{:02X}   {:<35} {:<12} {:<8} {}",
                 response.vcp_code,
@@ -397,7 +400,7 @@ fn scan_vcp(device: Option<String>, primary: bool, json: bool) -> Result<()> {
             );
         }
     }
-    
+
     Ok(())
 }
 

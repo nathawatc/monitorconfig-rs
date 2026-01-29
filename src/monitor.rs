@@ -174,7 +174,10 @@ pub fn find_monitor(device_name: &str) -> Result<PhysicalMonitor> {
 
     monitors
         .into_iter()
-        .find(|m| m.info().device_name == device_name)
+        .find(|m| {
+            let info = m.info();
+            info.device_name == device_name || info.friendly_name == device_name
+        })
         .ok_or_else(|| crate::MonitorError::MonitorNotFound(device_name.to_string()))
 }
 
