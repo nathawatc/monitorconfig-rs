@@ -41,11 +41,9 @@ impl PhysicalMonitor {
     pub fn new(hmonitor: HMONITOR, physical_monitor: &native::PHYSICAL_MONITOR) -> Result<Self> {
         let monitor_info = native::get_monitor_info(hmonitor)?;
 
-        let device_name = unsafe {
-            // Note: windows-sys MONITORINFOEXW.szDevice is at offset after MONITORINFO
-            // For simplicity, use a placeholder device name based on handle address
-            format!("DISPLAY_{:p}", hmonitor as *const ())
-        };
+        // Note: windows-sys MONITORINFOEXW.szDevice is at offset after MONITORINFO
+        // For simplicity, use a placeholder device name based on handle address
+        let device_name = format!("DISPLAY_{:p}", hmonitor as *const ());
 
         let is_primary = (monitor_info.monitorInfo.dwFlags & 1) != 0;
 

@@ -121,7 +121,7 @@ unsafe extern "system" fn enum_monitor_callback(
     _lprect: *mut RECT,
     lparam: LPARAM,
 ) -> i32 {
-    let monitors = &mut *(lparam as *mut Vec<HMONITOR>);
+    let monitors = unsafe { &mut *(lparam as *mut Vec<HMONITOR>) };
     monitors.push(hmonitor);
     1
 }
