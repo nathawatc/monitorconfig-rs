@@ -34,8 +34,15 @@ rustup target add x86_64-pc-windows-gnu
 echo ""
 
 # Build in release mode
-echo "Building in release mode for Windows..."
-cargo build --target x86_64-pc-windows-gnu --release
+if [[ "$1" == "--gui" || "$1" == "gui" ]]; then
+    echo "Building with GUI subsystem (no console window)..."
+    cargo build --target x86_64-pc-windows-gnu --release --features gui-subsystem
+    GUI_BUILD=true
+else
+    echo "Building standard version for Windows..."
+    cargo build --target x86_64-pc-windows-gnu --release
+    GUI_BUILD=false
+fi
 
 echo ""
 echo "Build complete!"
@@ -44,7 +51,14 @@ echo "Binary location: target/x86_64-pc-windows-gnu/release/monitorconfig.exe"
 echo "Binary size:"
 ls -lh target/x86_64-pc-windows-gnu/release/monitorconfig.exe | awk '{print $5}'
 echo ""
+
+if [ "$GUI_BUILD" = true ]; then
+    echo "Note: This build uses GUI subsystem and won't show console windows."
+    echo ""
+fi
+
 echo "To install globally, run: cargo install --path ."
+echo "For GUI subsystem build, run: ./build.sh --gui"
 echo ""
 
 # Run basic check

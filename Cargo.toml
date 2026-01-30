@@ -13,6 +13,11 @@ categories = ["command-line-utilities", "hardware-support", "os::windows-apis"]
 exclude = ["docs", "examples"]
 publish = false
 
+[features]
+# Build without console window for Task Scheduler/background tasks
+# Usage: cargo build --release --features gui-subsystem
+gui-subsystem = []
+
 [profile.release]
 opt-level = 3
 strip = true

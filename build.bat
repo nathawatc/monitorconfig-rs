@@ -20,7 +20,19 @@ echo.
 
 REM Build in release mode
 echo Building in release mode...
-cargo build --release
+echo.
+
+REM Check if GUI subsystem build is requested
+if "%1"=="--gui" (
+    echo Building with GUI subsystem ^(no console window^)...
+    cargo build --release --features gui-subsystem
+) else if "%1"=="gui" (
+    echo Building with GUI subsystem ^(no console window^)...
+    cargo build --release --features gui-subsystem
+) else (
+    echo Building standard version...
+    cargo build --release
+)
 
 if %ERRORLEVEL% NEQ 0 (
     echo Build failed!
@@ -36,7 +48,17 @@ echo.
 REM Show binary size
 for %%A in (target\release\monitorconfig.exe) do echo Binary size: %%~zA bytes
 echo.
+
+if "%1"=="--gui" (
+    echo Note: This build uses GUI subsystem and won't show console windows.
+    echo.
+) else if "%1"=="gui" (
+    echo Note: This build uses GUI subsystem and won't show console windows.
+    echo.
+)
+
 echo To install globally, run: cargo install --path .
+echo For GUI subsystem build, run: build.bat --gui
 echo.
 
 REM Run basic check

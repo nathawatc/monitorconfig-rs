@@ -157,6 +157,47 @@ monitorconfig reset-defaults --primary
 monitorconfig reset-defaults --primary --color-only
 ```
 
+## Background Tasks / Task Scheduler
+
+When running MonitorConfig from Windows Task Scheduler or other background automation tools, you may want to suppress console output and prevent the command window from flashing.
+
+### Silent Mode
+
+Use the global `--silent` (or `-s`) flag to suppress all console output:
+
+```bash
+# Silent mode - no output
+monitorconfig set-vcp -d "Lenovo L22i-40" 0x14 11 --silent
+
+# Also works with short form
+monitorconfig set-brightness 50 --primary -s
+```
+
+This flag works with all commands and is especially useful for:
+
+- Task Scheduler automated tasks
+- Startup scripts
+- Batch files
+- Background automation
+
+### Complete Console Window Suppression
+
+For Windows builds, you can compile the binary to completely hide the console window using Cargo features. This prevents even the brief flash when running from Task Scheduler.
+
+**Build with GUI subsystem** (no console window):
+
+```bash
+cargo build --release --features gui-subsystem
+```
+
+For cross-compilation from Linux:
+
+```bash
+cargo build --release --target x86_64-pc-windows-gnu --features gui-subsystem
+```
+
+**Note**: GUI subsystem builds won't show any console output or errors. Only use this for production automation where errors are logged elsewhere. For development and testing, use the standard build without the feature flag.
+
 ## Common VCP Codes
 
 | Code | Name                 | Description                   |
