@@ -10,7 +10,7 @@ repository = "https://github.com/Scott-Nx/MonitorConfig_RS"
 license = "MIT"
 keywords = ["monitor", "display", "brightness", "ddc-ci", "windows"]
 categories = ["command-line-utilities", "hardware-support", "os::windows-apis"]
-exclude = ["docs", "examples"]
+exclude = ["docs"]
 publish = false
 
 [features]
@@ -30,7 +30,7 @@ windows-sys = { version = "0.61.2", features = [
     "Win32_Foundation",
     "Win32_Graphics_Gdi",
 ] }
-clap = { version = "4.5.60", features = ["derive", "cargo"] }
+clap = { version = "4.5.60", features = ["derive"] }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
 thiserror = "2.0.18"

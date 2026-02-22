@@ -1,5 +1,5 @@
 #!/bin/bash
-# Build script for monitorconfig
+# Build script for monitorconfig (Linux → Windows cross-compilation)
 
 set -e
 
@@ -44,12 +44,14 @@ else
     GUI_BUILD=false
 fi
 
+BINARY="target/x86_64-pc-windows-gnu/release/monitorconfig.exe"
+
 echo ""
 echo "Build complete!"
 echo ""
-echo "Binary location: target/x86_64-pc-windows-gnu/release/monitorconfig.exe"
+echo "Binary location: ${BINARY}"
 echo "Binary size:"
-ls -lh target/x86_64-pc-windows-gnu/release/monitorconfig.exe | awk '{print $5}'
+ls -lh "${BINARY}" | awk '{print $5}'
 echo ""
 
 if [ "$GUI_BUILD" = true ]; then
@@ -57,13 +59,20 @@ if [ "$GUI_BUILD" = true ]; then
     echo ""
 fi
 
+# Verify the binary was produced
+if [ -f "${BINARY}" ]; then
+    echo "Build verified: ${BINARY} exists."
+    file "${BINARY}"
+else
+    echo "Error: Expected binary not found at ${BINARY}"
+    exit 1
+fi
+
+echo ""
 echo "To install globally, run: cargo install --path ."
 echo "For GUI subsystem build, run: ./build.sh --gui"
 echo ""
-
-# Run basic check
-echo "Running basic functionality check..."
+echo "Note: This is a Windows binary. Copy it to a Windows machine to run it,"
+echo "or use Wine: wine ${BINARY} --version"
 echo ""
-./target/x86_64-pc-windows-gnu/release/monitorconfig.exe --version
-echo ""
-echo "To test the tool, run: ./target/x86_64-pc-windows-gnu/release/monitorconfig.exe list"
+echo "To test the tool on Windows, run: monitorconfig.exe list"

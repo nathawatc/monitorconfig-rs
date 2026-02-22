@@ -12,10 +12,10 @@ A native Windows CLI tool for controlling external monitors via DDC/CI protocol.
 ### Module Structure
 
 - **[main.rs](../src/main.rs)**: Entry point - minimal error handling wrapper
-- **[cli.rs](../src/cli.rs)**: Clap-based command definitions and routing logic (437 lines)
+- **[cli.rs](../src/cli.rs)**: Clap-based command definitions, routing logic, and all command handler functions
 - **[monitor.rs](../src/monitor.rs)**: `Monitor` trait, `PhysicalMonitor` struct, and monitor enumeration/discovery functions
 - **[native.rs](../src/native.rs)**: FFI bindings to Windows APIs (`dxva2.dll` for DDC/CI, `user32.dll` for enumeration)
-- **[vcp.rs](../src/vcp.rs)**: VCP (VESA Command Protocol) feature codes and scanning logic (1110 lines of VCP code definitions)
+- **[vcp.rs](../src/vcp.rs)**: VCP (VESA Command Protocol) feature codes, scanning logic, and known VCP code definitions
 - **[error.rs](../src/error.rs)**: `thiserror`-based error types (`MonitorError` enum)
 
 ### Key Design Patterns
@@ -24,21 +24,21 @@ A native Windows CLI tool for controlling external monitors via DDC/CI protocol.
 
 1. `MonitorEnumerator::enumerate()` → uses Win32 `EnumDisplayMonitors` callback
 2. For each HMONITOR → `get_physical_monitors()` → gets `PHYSICAL_MONITOR` structs via `GetPhysicalMonitorsFromHMONITOR`
-3. `PhysicalMonitor::new()` wraps the handle and extracts friendly name from UTF-16 description
+3. `PhysicalMonitor::new()` wraps the handle, extracts device name from `MONITORINFOEXW.szDevice`, and extracts friendly name from UTF-16 description
 4. Helper functions: `enumerate_monitors()`, `find_monitor()`, `get_primary_monitor()`
 
 **FFI Safety**: All unsafe Windows API calls are isolated in [native.rs](../src/native.rs). Use `#[link(name = "dxva2")]` extern blocks for DDC/CI functions not in `windows-sys`.
 
 **Error Handling**: Return `Result<T>` (aliased to `Result<T, MonitorError>`) from all fallible operations. Use `thiserror` for error definitions. Windows API failures (return 0) should convert to appropriate `MonitorError` variants.
 
-**Monitor Selection**: Commands accept `--primary` flag OR `--device <name>`. Device name can be display device path (e.g., `\\.\DISPLAY1`) or friendly name (e.g., "Dell U2723DE"). The `get_monitor()` helper in [cli.rs](../src/cli.rs#L238) handles this logic.
+**Monitor Selection**: Commands accept `--primary` flag OR `--device <name>`. Device name can be display device path (e.g., `\\.\DISPLAY1`) or friendly name (e.g., "Dell U2723DE"). Matching is **case-insensitive**. The `get_monitor()` helper in [cli.rs](../src/cli.rs) handles this logic, defaulting to the primary monitor when neither flag is provided.
 
 ## Build and Cross-Compilation
 
 **Windows Build**: `cargo build --release` or `build.bat`  
 **Linux → Windows Cross-Compilation**: `build.sh` uses MinGW-w64 with target `x86_64-pc-windows-gnu`
 
-**Release Profile Optimizations** in [Cargo.toml](../Cargo.toml#L15-L19):
+**Release Profile Optimizations** in [Cargo.toml](../Cargo.toml):
 
 ```toml
 [profile.release]
@@ -46,11 +46,12 @@ opt-level = 3
 strip = true
 lto = true
 codegen-units = 1
+panic = "abort"
 ```
 
 ## Critical Conventions
 
-1. **VCP Code Format**: Always use hex format (e.g., `0x10` for brightness). The CLI uses a custom `parse_hex` parser for VCP code arguments.
+1. **VCP Code Format**: Always use hex format (e.g., `0x10` for brightness). The CLI uses a custom `parse_hex` parser for VCP code arguments that accepts both `0x` and `0X` prefixes as well as plain decimal values.
 
 2. **JSON Output**: All read commands support `--json` flag. Use `serde_json::to_string_pretty()` for consistent formatting.
 
@@ -58,7 +59,7 @@ codegen-units = 1
 
 4. **VCP Scanning**: The `scan-vcp` command tests all codes 0x00-0xFF and returns only supported ones (similar to PowerShell's `Get-MonitorVCPResponse -All`). Silently ignore unsupported codes.
 
-5. **Device Name**: Extracted from `MONITORINFOEXW.szDevice` (e.g., `\\.\DISPLAY1`). The UTF-16 device name is converted via `String::from_utf16_lossy`.
+5. **Device Name**: Extracted from `MONITORINFOEXW.szDevice` (e.g., `\\.\DISPLAY1`). The UTF-16 device name is converted via `String::from_utf16_lossy`. Device name matching in `find_monitor()` is **case-insensitive** for both device names and friendly names.
 
 6. **Handle Cleanup**: `PhysicalMonitor` implements `Drop` to call `DestroyPhysicalMonitor`. Each `PhysicalMonitor` exclusively owns its handle — there is no separate guard or bulk destroy. When `enumerate_monitors()` fails to create a `PhysicalMonitor`, the raw handle is explicitly destroyed inline to prevent leaks.
 
@@ -84,6 +85,7 @@ monitorconfig scan-vcp --primary --json
 - **dxva2.dll**: DDC/CI functions (manually linked, not in windows-sys)
 - **clap 4.5**: CLI parsing with derive macros
 - **serde/serde_json**: JSON serialization for all data structures
+- **thiserror 2.0**: Derive macro for `MonitorError` enum
 
 **Why Not windows-rs**: Chose `windows-sys` for smaller binary size (critical for CLI tool distribution).
 

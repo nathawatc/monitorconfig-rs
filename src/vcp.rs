@@ -111,6 +111,10 @@ impl VcpMonitor {
                 ));
             }
 
+            if length == 0 {
+                return Ok(String::new());
+            }
+
             let mut buffer = vec![0u8; length as usize];
             let result = crate::native::dxva2::CapabilitiesRequestAndCapabilitiesReply(
                 self.handle,

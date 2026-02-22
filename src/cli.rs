@@ -397,7 +397,7 @@ fn set_vcp(
     retry_delay: u64,
     silent: bool,
 ) -> Result<()> {
-    let max_attempts = retry + 1;
+    let max_attempts = retry.saturating_add(1);
     let mut last_err = None;
 
     for attempt in 1..=max_attempts {
@@ -428,7 +428,7 @@ fn set_vcp(
         }
     }
 
-    Err(last_err.unwrap())
+    Err(last_err.expect("retry loop ran at least once"))
 }
 
 /// Single attempt at setting a VCP feature. Acquiring and releasing the physical
