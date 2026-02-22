@@ -194,7 +194,7 @@ pub enum Commands {
 }
 
 fn parse_hex(s: &str) -> std::result::Result<u8, String> {
-    if let Some(stripped) = s.strip_prefix("0x") {
+    if let Some(stripped) = s.strip_prefix("0x").or_else(|| s.strip_prefix("0X")) {
         u8::from_str_radix(stripped, 16).map_err(|e| e.to_string())
     } else {
         s.parse::<u8>().map_err(|e| e.to_string())
