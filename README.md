@@ -1,6 +1,6 @@
 # MonitorConfig - Rust CLI
 
-A native Windows CLI tool for managing monitor settings via DDC/CI and WMI, written in Rust. This is a complete rewrite of the original PowerShell module.
+A native Windows CLI tool for managing monitor settings via DDC/CI, written in Rust. This is a complete rewrite of the original PowerShell module.
 
 ## Features
 
@@ -11,6 +11,7 @@ A native Windows CLI tool for managing monitor settings via DDC/CI and WMI, writ
 - **Monitor Capabilities**: Query monitor capabilities string
 - **Settings Management**: Save current settings or reset to factory defaults
 - **JSON Output**: All commands support JSON output for scripting
+- **Resume-safe Execution**: Built-in `--wait` and `--retry` flags for reliable post-sleep/hibernate automation
 
 ## Requirements
 
@@ -31,7 +32,6 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ### Build Release Version
 
 ```bash
-cd rust-cli
 cargo build --release
 ```
 
@@ -107,7 +107,24 @@ monitorconfig set-vcp 0x10 75 --primary
 
 # Turn off monitor (power mode = 4)
 monitorconfig set-vcp 0xD6 4 --primary
+
+# Set color temperature preset, with startup wait and retries (safe for Task Scheduler / post-resume)
+monitorconfig set-vcp 0x14 11 --device "Lenovo L22i-40" --wait 10 --retry 3 --retry-delay 8 --silent
 ```
+
+#### `set-vcp` Options
+
+| Option                    | Short | Default | Description                                                                                                                                                                                                    |
+| ------------------------- | ----- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--device <NAME>`         | `-d`  | —       | Target monitor by device path or friendly name                                                                                                                                                                 |
+| `--primary`               | `-p`  | —       | Target the primary monitor                                                                                                                                                                                     |
+| `--wait <SECONDS>`        | `-w`  | `0`     | Sleep this many seconds **before** acquiring any monitor handle. Useful after resume from sleep/hibernate to give the monitor's DDC/CI firmware time to fully initialize before the first I²C command is sent. |
+| `--retry <COUNT>`         | —     | `0`     | Retry the command up to COUNT additional times if it fails                                                                                                                                                     |
+| `--retry-delay <SECONDS>` | —     | `5`     | Seconds to wait between retry attempts                                                                                                                                                                         |
+| `--silent`                | `-s`  | —       | Suppress all console output                                                                                                                                                                                    |
+
+> **Why `--wait` instead of a Task Scheduler trigger delay?**
+> The Task Scheduler `<Delay>` counts from when the _event fires_ (e.g. resume detected), not from when the display driver finishes restoring the monitor signal. The monitor's internal DDC/CI controller can take an additional 10–15 seconds after the display comes back before it accepts I²C commands. `--wait` delays _inside the process_, after the display driver is already up, giving a more reliable buffer. Sending a DDC/CI command to a monitor whose firmware MCU is still initializing can cause the monitor to hang and require a power cycle to recover.
 
 ### List Known VCP Codes
 
@@ -132,7 +149,7 @@ monitorconfig scan-vcp --device "\\.\DISPLAY1"
 monitorconfig scan-vcp --primary --json
 ```
 
-**Note**: `list-vcp` shows a reference list of common VCP codes, while `scan-vcp` actively queries your monitor to discover which codes it actually supports (similar to PowerShell's `Get-MonitorVCPResponse -All`).
+> **Note**: `list-vcp` shows a static reference list of common VCP codes, while `scan-vcp` actively queries your monitor to discover which codes it actually supports (similar to PowerShell's `Get-MonitorVCPResponse -All`).
 
 ### Get Monitor Capabilities
 
@@ -157,28 +174,45 @@ monitorconfig reset-defaults --primary
 monitorconfig reset-defaults --primary --color-only
 ```
 
+## Global Flags
+
+These flags work with every command:
+
+| Flag               | Short | Description                        |
+| ------------------ | ----- | ---------------------------------- |
+| `--silent`         | `-s`  | Suppress all console output        |
+| `--wait <SECONDS>` | `-w`  | Sleep before executing (see above) |
+
 ## Background Tasks / Task Scheduler
 
-When running MonitorConfig from Windows Task Scheduler or other background automation tools, you may want to suppress console output and prevent the command window from flashing.
+When running MonitorConfig from Windows Task Scheduler or other background automation tools, use `--silent` to suppress console output and the `--wait` / `--retry` flags to handle timing issues around resume from sleep or hibernate.
 
 ### Silent Mode
 
 Use the global `--silent` (or `-s`) flag to suppress all console output:
 
 ```bash
-# Silent mode - no output
 monitorconfig set-vcp -d "Lenovo L22i-40" 0x14 11 --silent
-
-# Also works with short form
 monitorconfig set-brightness 50 --primary -s
 ```
 
-This flag works with all commands and is especially useful for:
+### Resume-safe Task Scheduler Pattern
 
-- Task Scheduler automated tasks
-- Startup scripts
-- Batch files
-- Background automation
+Monitors can take 10–15 seconds after a sleep/hibernate resume before their DDC/CI controller is ready to accept commands. Sending a command too early may cause the monitor to hang (black screen requiring a power-cycle to recover).
+
+Use `--wait` to delay _inside the process_ and `--retry` to automatically re-attempt if the monitor is still not ready:
+
+```bash
+monitorconfig set-vcp -d "Lenovo L22i-40" 0x14 11 -s --wait 10 --retry 3 --retry-delay 8
+```
+
+**Recommended Task Scheduler settings for resume triggers:**
+
+| Setting                     | Recommended Value | Reason                                                                           |
+| --------------------------- | ----------------- | -------------------------------------------------------------------------------- |
+| Trigger `<Delay>`           | `PT2S`            | Just enough for the process to be schedulable; real delay is handled by `--wait` |
+| `<ExecutionTimeLimit>`      | `PT2M`            | Accommodates `--wait 10` + up to 3 retries × 8 s = ~50 s worst case              |
+| `<MultipleInstancesPolicy>` | `IgnoreNew`       | Prevents duplicate runs if multiple resume events fire simultaneously            |
 
 ### Complete Console Window Suppression
 
@@ -196,7 +230,7 @@ For cross-compilation from Linux:
 cargo build --release --target x86_64-pc-windows-gnu --features gui-subsystem
 ```
 
-**Note**: GUI subsystem builds won't show any console output or errors. Only use this for production automation where errors are logged elsewhere. For development and testing, use the standard build without the feature flag.
+> **Note**: GUI subsystem builds produce no console output at all, including errors. Only use this for production automation where errors are logged elsewhere. For development and testing, use the standard build without the feature flag.
 
 ## Common VCP Codes
 
@@ -243,6 +277,19 @@ monitorconfig get-brightness --primary --json >> monitors.json
 monitorconfig get-capabilities --primary >> capabilities.txt
 ```
 
+### Re-apply Color Preset After Resume (BrightStay pattern)
+
+Some monitors (e.g. Lenovo L22i-40) reset certain VCP settings after waking from sleep. Use
+`--wait` and `--retry` to reliably re-apply the setting once the monitor's DDC/CI firmware is ready:
+
+```bash
+monitorconfig set-vcp -d "Lenovo L22i-40" 0x14 11 -s --wait 10 --retry 3 --retry-delay 8
+```
+
+Add this as a Task Scheduler action triggered by the resume/logon events
+(`Microsoft-Windows-Power-Troubleshooter` Event ID 1, `Microsoft-Windows-Kernel-Power` Event ID 507,
+`Microsoft-Windows-Winlogon` Event ID 7001).
+
 ## Technical Details
 
 ### Architecture
@@ -257,7 +304,13 @@ The tool is structured into several modules:
 
 ### DDC/CI Support
 
-DDC/CI (Display Data Channel Command Interface) allows software control of monitor settings. Most modern external monitors support it, but it may need to be enabled in the monitor's OSD (On-Screen Display) menu.
+DDC/CI (Display Data Channel Command Interface) allows software control of monitor settings over the I²C bus embedded in the monitor cable. Most modern external monitors support it, but it may need to be enabled in the monitor's OSD (On-Screen Display) menu.
+
+#### DDC/CI and Resume Timing
+
+After a system resumes from sleep or hibernate, the display driver may report the monitor as available before the monitor's internal MCU has finished its own power-on initialization. The DDC/CI I²C bus operates at ~100 kHz and the monitor firmware needs to be fully ready before it can correctly handle incoming commands. Issuing a `SetVCPFeature` command during this window can corrupt the monitor's MCU state, causing a black screen that requires a full power cycle to recover.
+
+The `--wait` flag addresses this by delaying command execution inside the process (after the OS-level display driver is already up), and `--retry` ensures that a transient failure during the initialization window does not cause the task to give up entirely.
 
 #### Troubleshooting DDC/CI
 
@@ -265,6 +318,7 @@ DDC/CI (Display Data Channel Command Interface) allows software control of monit
 2. Try different cable types (DisplayPort usually works better than HDMI)
 3. Update monitor firmware if available
 4. Some USB-C docks may not support DDC/CI
+5. If commands work manually but fail after resume, increase `--wait` in 5-second increments until reliable
 
 ## Performance
 

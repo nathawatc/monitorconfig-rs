@@ -1,5 +1,7 @@
 use crate::{Result, monitor, monitor::Monitor, vcp};
 use clap::{Parser, Subcommand};
+use std::thread;
+use std::time::Duration;
 
 #[derive(Parser)]
 #[command(name = "monitorconfig")]
@@ -8,6 +10,12 @@ pub struct Cli {
     /// Suppress all output (useful for background tasks and Task Scheduler)
     #[arg(short, long, global = true)]
     pub silent: bool,
+
+    /// Wait this many seconds before executing the command (useful after resume from sleep).
+    /// This delay happens inside the process, after the monitor handle is not yet acquired,
+    /// so it is safer than a Task Scheduler action delay which races against monitor DDC/CI init.
+    #[arg(short, long, global = true, value_name = "SECONDS", default_value = "0")]
+    pub wait: u64,
 
     #[command(subcommand)]
     pub command: Commands,
@@ -115,6 +123,14 @@ pub enum Commands {
         /// Use primary monitor
         #[arg(short, long)]
         primary: bool,
+
+        /// Number of times to retry if the command fails (e.g. monitor not ready after resume)
+        #[arg(long, value_name = "COUNT", default_value = "0")]
+        retry: u32,
+
+        /// Seconds to wait between retry attempts
+        #[arg(long, value_name = "SECONDS", default_value = "5")]
+        retry_delay: u64,
     },
 
     /// List all VCP codes
@@ -189,6 +205,12 @@ pub fn run() -> Result<()> {
     let cli = Cli::parse();
     let silent = cli.silent;
 
+    // Global startup delay — runs before any monitor handle is acquired, so the
+    // DDC/CI subsystem has time to fully initialize after resume from sleep/hibernate.
+    if cli.wait > 0 {
+        thread::sleep(Duration::from_secs(cli.wait));
+    }
+
     match cli.command {
         Commands::List { json } => list_monitors(json, silent),
         Commands::GetBrightness {
@@ -222,7 +244,9 @@ pub fn run() -> Result<()> {
             value,
             device,
             primary,
-        } => set_vcp(code, value, device, primary, silent),
+            retry,
+            retry_delay,
+        } => set_vcp(code, value, device, primary, retry, retry_delay, silent),
         Commands::ListVcp { json } => list_vcp(json, silent),
         Commands::ScanVcp {
             device,
@@ -369,14 +393,53 @@ fn set_vcp(
     value: u32,
     device: Option<String>,
     primary: bool,
+    retry: u32,
+    retry_delay: u64,
     silent: bool,
 ) -> Result<()> {
-    let mon = get_monitor(device, primary)?;
+    let max_attempts = retry + 1;
+    let mut last_err = None;
+
+    for attempt in 1..=max_attempts {
+        // Re-enumerate on every attempt — the monitor may not have been detected
+        // on earlier attempts (e.g. display driver still initializing after resume).
+        match try_set_vcp(code, value, device.as_deref(), primary) {
+            Ok(()) => {
+                if !silent {
+                    println!("VCP code 0x{:02X} set to {}", code, value);
+                }
+                return Ok(());
+            }
+            Err(e) => {
+                last_err = Some(e);
+                if attempt < max_attempts {
+                    if !silent {
+                        eprintln!(
+                            "Attempt {}/{} failed, retrying in {}s...",
+                            attempt, max_attempts, retry_delay
+                        );
+                    }
+                    // Wait between retries so the monitor DDC/CI controller has time
+                    // to finish its post-power-on initialization sequence before the
+                    // next I2C transaction is attempted.
+                    thread::sleep(Duration::from_secs(retry_delay));
+                }
+            }
+        }
+    }
+
+    Err(last_err.unwrap())
+}
+
+/// Single attempt at setting a VCP feature. Acquiring and releasing the physical
+/// monitor handle is scoped tightly here so that a failed attempt does not leave
+/// any handles open when the retry delay begins.
+fn try_set_vcp(code: u8, value: u32, device: Option<&str>, primary: bool) -> Result<()> {
+    let mon = get_monitor(device.map(|s| s.to_string()), primary)?;
     let vcp_mon = vcp::VcpMonitor::new(mon.handle());
     vcp_mon.set_vcp_feature(code, value)?;
-    if !silent {
-        println!("VCP code 0x{:02X} set to {}", code, value);
-    }
+    // `vcp_mon` drops here (no-op), then `mon` drops → DestroyPhysicalMonitor is
+    // called cleanly before we return, ensuring no handle is held across the retry gap.
     Ok(())
 }
 
