@@ -2,6 +2,11 @@ use crate::{Result, native};
 use serde::Serialize;
 use windows_sys::Win32::{Foundation::HANDLE, Graphics::Gdi::HMONITOR};
 
+/// Win32 `MONITORINFOF_PRIMARY` flag (value `1`).  Not exported by the
+/// `windows-sys` Gdi feature, so we define it ourselves to avoid a magic
+/// number in the primary-monitor check.
+const MONITORINFOF_PRIMARY: u32 = 1;
+
 #[derive(Debug, Clone, Serialize)]
 pub struct BrightnessInfo {
     pub minimum: u32,
@@ -47,7 +52,7 @@ impl PhysicalMonitor {
             String::from_utf16_lossy(&raw[..len])
         };
 
-        let is_primary = (monitor_info.monitorInfo.dwFlags & 1) != 0;
+        let is_primary = (monitor_info.monitorInfo.dwFlags & MONITORINFOF_PRIMARY) != 0;
 
         Ok(Self {
             handle: physical_monitor.h_physical_monitor,
@@ -186,11 +191,13 @@ pub fn enumerate_monitors() -> Result<Vec<PhysicalMonitor>> {
 pub fn find_monitor(device_name: &str) -> Result<PhysicalMonitor> {
     let monitors = enumerate_monitors()?;
 
+    let needle = device_name.to_lowercase();
     monitors
         .into_iter()
         .find(|m| {
             let info = m.info();
-            info.device_name == device_name || info.friendly_name == device_name
+            info.device_name.to_lowercase() == needle
+                || info.friendly_name.to_lowercase() == needle
         })
         .ok_or_else(|| crate::MonitorError::MonitorNotFound(device_name.to_string()))
 }
