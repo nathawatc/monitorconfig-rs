@@ -1,8 +1,8 @@
 use crate::{MonitorError, Result};
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use windows_sys::Win32::Foundation::HANDLE;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct VcpFeatureResponse {
     pub vcp_code: u8,
     pub current_value: u32,
@@ -10,7 +10,7 @@ pub struct VcpFeatureResponse {
     pub code_type: VcpCodeType,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize)]
 pub enum VcpCodeType {
     SetParameter = 0,
     Momentary = 1,

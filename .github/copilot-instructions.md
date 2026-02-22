@@ -58,9 +58,9 @@ codegen-units = 1
 
 4. **VCP Scanning**: The `scan-vcp` command tests all codes 0x00-0xFF and returns only supported ones (similar to PowerShell's `Get-MonitorVCPResponse -All`). Silently ignore unsupported codes.
 
-5. **Device Name Workaround**: [monitor.rs:45](../src/monitor.rs#L45) uses `format!("DISPLAY_{:p}", hmonitor)` as a placeholder because `windows-sys` MONITORINFOEXW struct layout requires additional parsing. TODO: Extract actual device name from display device.
+5. **Device Name**: Extracted from `MONITORINFOEXW.szDevice` (e.g., `\\.\DISPLAY1`). The UTF-16 device name is converted via `String::from_utf16_lossy`.
 
-6. **Handle Cleanup**: `PhysicalMonitor` implements `Drop` to call `DestroyPhysicalMonitor`. Always ensure RAII cleanup for monitor handles.
+6. **Handle Cleanup**: `PhysicalMonitor` implements `Drop` to call `DestroyPhysicalMonitor`. Each `PhysicalMonitor` exclusively owns its handle — there is no separate guard or bulk destroy. When `enumerate_monitors()` fails to create a `PhysicalMonitor`, the raw handle is explicitly destroyed inline to prevent leaks.
 
 ## Testing and Validation
 
