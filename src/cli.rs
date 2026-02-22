@@ -11,10 +11,8 @@ pub struct Cli {
     #[arg(short, long, global = true)]
     pub silent: bool,
 
-    /// Wait this many seconds before executing the command (useful after resume from sleep).
-    /// This delay happens inside the process, after the monitor handle is not yet acquired,
-    /// so it is safer than a Task Scheduler action delay which races against monitor DDC/CI init.
-    #[arg(short, long, global = true, value_name = "SECONDS", default_value = "0")]
+    /// Wait this many seconds before executing the command
+    #[arg(short, long, global = true, default_value = "0")]
     pub wait: u64,
 
     #[command(subcommand)]
