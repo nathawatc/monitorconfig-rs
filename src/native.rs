@@ -94,10 +94,9 @@ impl MonitorEnumerator {
         let mut monitors = Vec::new();
 
         unsafe {
-            // HDC is `isize` in windows-sys, so pass 0 for a null HDC
-            // rather than std::ptr::null_mut() which is a pointer type.
+            // HDC is `*mut c_void` in windows-sys 0.61.x, so pass null_mut()
             let result = EnumDisplayMonitors(
-                0,
+                std::ptr::null_mut(),
                 std::ptr::null(),
                 Some(enum_monitor_callback),
                 &mut monitors as *mut _ as isize,
