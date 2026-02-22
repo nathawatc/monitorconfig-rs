@@ -20,7 +20,7 @@ The `list` command enumerates all physical monitors that are currently active me
 
 Output monitor information in JSON format.
 
-**Type:** Flag  
+**Type:** Flag
 **Required:** No
 
 ## EXAMPLES
@@ -51,12 +51,12 @@ Outputs monitor information as JSON for scripting:
 ```json
 [
   {
-    "device_name": "\\.\\DISPLAY1",
+    "device_name": "\\\\.\\DISPLAY1",
     "friendly_name": "Dell U2723DE",
     "is_primary": true
   },
   {
-    "device_name": "\\.\\DISPLAY2",
+    "device_name": "\\\\.\\DISPLAY2",
     "friendly_name": "Samsung S27F350",
     "is_primary": false
   }
@@ -93,21 +93,16 @@ Returns an array of monitor objects with fields:
 
 ## NOTES
 
-- Device names follow the pattern `\\.\DISPLAYX` where X is a number starting from 1
-- The numbering may differ from what Windows display settings show
-- All monitors are accessed via DDC/CI protocol (no WMI support in Rust version)
-- Monitors must support DDC/CI and have it enabled in their OSD settings
+- Device names follow the pattern `\\.\DISPLAYX` where X is a number starting from 1.
+- The numbering may differ from what Windows display settings show.
+- All monitors are accessed via DDC/CI protocol.
+- Monitors must support DDC/CI and have it enabled in their OSD settings.
+- Device name matching (used by `--device` in other commands) is case-insensitive.
 
 ## SEE ALSO
 
-- [get-brightness](Get-MonitorBrightness.md) - Get monitor brightness
-- [set-brightness](Set-MonitorBrightness.md) - Set monitor brightness
-- [get-capabilities](Get-MonitorDetails.md) - Get monitor capabilities
-
-### MartinGC94.MonitorConfig.API.VCP.VCPMonitor
-
-Returned if the monitor cannot be controlled through WMI. DDC/CI support is not guaranteed.
-
-## NOTES
-
-## RELATED LINKS
+- [get-brightness](get-brightness.md) - Get monitor brightness
+- [set-brightness](set-brightness.md) - Set monitor brightness
+- [get-contrast](get-contrast.md) - Get monitor contrast
+- [get-capabilities](get-capabilities.md) - Get monitor capabilities
+- [scan-vcp](get-vcp.md) - Scan for supported VCP codes

@@ -31,7 +31,7 @@ These commands let you query monitors for VCP (VESA Command Protocol) feature va
 
 The VCP code to query (0-255, can be specified in hex like `0x10` or decimal like `16`).
 
-**Type:** Unsigned byte (u8)  
+**Type:** Unsigned byte (u8)
 **Required:** Yes (for get-vcp only)
 
 ## OPTIONS
@@ -40,21 +40,21 @@ The VCP code to query (0-255, can be specified in hex like `0x10` or decimal lik
 
 Specify the monitor by device name (e.g., `\\.\DISPLAY1`) or friendly name (e.g., "Dell U2723DE").
 
-**Type:** String  
+**Type:** String
 **Required:** No (defaults to primary monitor)
 
 ### `-p, --primary`
 
 Target the primary monitor.
 
-**Type:** Flag  
+**Type:** Flag
 **Required:** No
 
 ### `-j, --json`
 
 Output in JSON format.
 
-**Type:** Flag  
+**Type:** Flag
 **Required:** No
 
 ## EXAMPLES
@@ -68,10 +68,10 @@ monitorconfig get-vcp 0x10 --primary
 Output:
 
 ```text
-VCP Code: 0x10 - Brightness
-Description: Luminance of the image
+VCP Code: 0x10 - Luminance
+Description: Luminance of the image (Brightness control).
 Current value: 75 (max: 100)
-Type: Continuous
+Type: SetParameter
 ```
 
 ### Example 2: Get input source
@@ -80,7 +80,24 @@ Type: Continuous
 monitorconfig get-vcp 0x60 --device "\\.\DISPLAY1"
 ```
 
-### Example 3: Scan all supported VCP codes
+### Example 3: Get VCP value in JSON format
+
+```bash
+monitorconfig get-vcp 0x10 --primary --json
+```
+
+Output:
+
+```json
+{
+  "vcp_code": 16,
+  "current_value": 75,
+  "maximum_value": 100,
+  "code_type": "SetParameter"
+}
+```
+
+### Example 4: Scan all supported VCP codes
 
 ```bash
 monitorconfig scan-vcp --primary
@@ -94,75 +111,47 @@ Found 15 supported VCP codes
 
 Code   Name                                CurrentValue MaxValue Description
 ------------------------------------------------------------------------------------------------------------------------
-0x10   Brightness                          75           100      Luminance of the image
-0x12   Contrast                            50           100      Contrast of the image
-0x14   Color Temperature                   6500         10000    Select color temperature
-0x60   Input Source                        3            4        Select input source
+0x10   Luminance                           75           100      Luminance of the image (Brightness control).
+0x12   Contrast                            50           100      Contrast of the image.
+0x14   Select Color Preset                 6            11       Select a specified color temperature.
+0x60   Input Select                        3            4        Adjusts the active input on the display.
 ...
 ```
 
-## PARAMETERS
+### Example 5: Scan VCP codes in JSON format
 
-### -All
-
-Queries the monitor for all possible VCP codes from 0-255 and returns the ones that are supported, along with their value.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: All
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
+```bash
+monitorconfig scan-vcp --primary --json
 ```
 
-### -Monitor
+## OUTPUT
 
-The monitor(s) to return VCP code details for.
+### Text Format (Default)
 
-```yaml
-Type: VCPMonitor[]
-Parameter Sets: (All)
-Aliases:
+**get-vcp** displays the VCP code, its name and description (if known), current value, maximum value, and type (`SetParameter` or `Momentary`).
 
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: True (ByValue)
-Accept wildcard characters: False
-```
+**scan-vcp** displays a table of all supported VCP codes with their current and maximum values.
 
-### -VCPCode
+### JSON Format (--json)
 
-The VCP codes (0-255) to query.
+**get-vcp** returns a single object with fields:
 
-```yaml
-Type: Byte[]
-Parameter Sets: SpecifiedCode
-Aliases:
+- `vcp_code` (number): The VCP code queried
+- `current_value` (number): Current value
+- `maximum_value` (number): Maximum value
+- `code_type` (string): `"SetParameter"` or `"Momentary"`
 
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### CommonParameters
-
-This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
-
-## INPUTS
-
-### MartinGC94.MonitorConfig.API.VCP.VCPMonitor[]
-
-## OUTPUTS
-
-### MartinGC94.MonitorConfig.API.VCP.VCPFeatureResponse
+**scan-vcp** returns an array of the same objects.
 
 ## NOTES
 
-## RELATED LINKS
+- VCP code support varies by monitor model. Use `scan-vcp` to discover which codes your monitor supports.
+- VCP codes can be specified in hex (`0x10`, `0X10`) or decimal (`16`).
+- The `code_type` field indicates whether the code is a continuous setting (`SetParameter`) or a one-shot action (`Momentary`).
+- DDC/CI must be enabled in the monitor's OSD (On-Screen Display) settings.
+
+## SEE ALSO
+
+- [set-vcp](set-vcp.md) - Set a VCP feature value
+- [list-vcp](../README.md#list-known-vcp-codes) - List all known VCP codes
+- [list](list.md) - List all monitors

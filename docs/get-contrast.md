@@ -44,26 +44,26 @@ The Rust CLI provides color setting access through multiple commands:
 
 Specify the monitor by device name or friendly name.
 
-**Type:** String  
-**Required:** No
+**Type:** String
+**Required:** No (defaults to primary monitor if neither --device nor --primary is specified)
 
 ### `-p, --primary`
 
 Target the primary monitor.
 
-**Type:** Flag  
+**Type:** Flag
 **Required:** No
 
 ### `-j, --json`
 
 Output in JSON format.
 
-**Type:** Flag  
+**Type:** Flag
 **Required:** No
 
 ## EXAMPLES
 
-### Example 1: Get contrast
+### Example 1: Get contrast of primary monitor
 
 ```bash
 monitorconfig get-contrast --primary
@@ -75,36 +75,70 @@ Output:
 Current contrast: 50 (min: 0, max: 100)
 ```
 
-## PARAMETERS
+### Example 2: Get contrast of specific monitor
 
-### -Monitor
-
-The monitor(s) to return color details for.
-
-```yaml
-Type: VCPMonitor[]
-Parameter Sets: (All)
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: True (ByValue)
-Accept wildcard characters: False
+```bash
+monitorconfig get-contrast --device "\\.\DISPLAY2"
 ```
 
-### CommonParameters
+### Example 3: Get contrast in JSON format
 
-This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
+```bash
+monitorconfig get-contrast --primary --json
+```
 
-## INPUTS
+Output:
 
-### MartinGC94.MonitorConfig.API.VCP.VCPMonitor[]
+```json
+{
+  "minimum": 0,
+  "current": 50,
+  "maximum": 100
+}
+```
 
-## OUTPUTS
+### Example 4: Get color values using VCP codes
 
-### MartinGC94.MonitorConfig.API.MonitorColorInfo
+```bash
+# Red video gain
+monitorconfig get-vcp 0x16 --primary
+
+# Green video gain
+monitorconfig get-vcp 0x18 --primary
+
+# Blue video gain
+monitorconfig get-vcp 0x1A --primary
+```
+
+## OUTPUT
+
+### Text Format (Default)
+
+Displays contrast information in human-readable format:
+
+```text
+Current contrast: <value> (min: <min>, max: <max>)
+```
+
+### JSON Format (--json)
+
+Returns contrast information as a JSON object:
+
+- `current` (number): Current contrast level
+- `minimum` (number): Minimum supported contrast level
+- `maximum` (number): Maximum supported contrast level
 
 ## NOTES
 
-## RELATED LINKS
+- Contrast values are typically in the range 0-100, but this depends on the monitor.
+- The monitor must support DDC/CI and VCP code 0x12 (Contrast).
+- If neither `--device` nor `--primary` is specified, the primary monitor is used by default.
+- You can use either the device name (`\\.\DISPLAY1`) or the friendly name ("Dell U2723DE") with the `--device` option.
+- Device name matching is case-insensitive.
+
+## SEE ALSO
+
+- [set-contrast](set-contrast.md) - Set monitor contrast
+- [get-brightness](get-brightness.md) - Get monitor brightness
+- [get-vcp](get-vcp.md) - Get any VCP feature value
+- [list](list.md) - List all monitors

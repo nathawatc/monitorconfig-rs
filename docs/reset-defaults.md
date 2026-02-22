@@ -14,10 +14,10 @@ monitorconfig reset-defaults [OPTIONS]
 
 The `reset-defaults` command resets monitor settings to their factory default values. You can choose to reset all settings or only color-related settings.
 
-This uses VCP codes:
+This uses the following dxva2 functions internally:
 
-- 0x04 - Restore Factory Defaults (all settings)
-- 0x08 - Restore Factory Color Defaults (color only)
+- `RestoreMonitorFactoryDefaults` — resets all settings
+- `RestoreMonitorFactoryColorDefaults` — resets only color settings
 
 **Warning:** This will reset all or most monitor settings. Make sure to save any custom configurations beforehand if needed.
 
@@ -27,21 +27,21 @@ This uses VCP codes:
 
 Specify the monitor by device name (e.g., `\\.\DISPLAY1`) or friendly name (e.g., "Dell U2723DE").
 
-**Type:** String  
+**Type:** String
 **Required:** No (defaults to primary monitor)
 
 ### `-p, --primary`
 
 Target the primary monitor.
 
-**Type:** Flag  
+**Type:** Flag
 **Required:** No
 
 ### `-c, --color-only`
 
 Reset only color-related settings instead of all settings.
 
-**Type:** Flag  
+**Type:** Flag
 **Required:** No
 
 ## EXAMPLES
@@ -76,86 +76,25 @@ Monitor color settings reset to factory defaults
 monitorconfig reset-defaults --device "\\.\DISPLAY2"
 ```
 
-## PARAMETERS
+### Example 4: Reset silently (for scripts)
 
-### -Confirm
-
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
+```bash
+monitorconfig reset-defaults --primary --silent
 ```
-
-### -Kind
-
-The settings that should be reset.
-
-```yaml
-Type: ResetKind
-Parameter Sets: (All)
-Aliases:
-Accepted values: All, BrightnessAndContrast, Geometry, Colors, TVDefaults
-
-Required: True
-Position: 0
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Monitor
-
-The monitor(s) to reset settings on.
-
-```yaml
-Type: VCPMonitor[]
-Parameter Sets: (All)
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: True (ByValue)
-Accept wildcard characters: False
-```
-
-### -WhatIf
-
-Shows what would happen if the cmdlet runs.
-The cmdlet is not run.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: wi
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### CommonParameters
-
-This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
-
-## INPUTS
-
-### MartinGC94.MonitorConfig.API.VCP.VCPMonitor[]
-
-## OUTPUTS
-
-### System.Object
 
 ## NOTES
 
-## RELATED LINKS
+- If neither `--device` nor `--primary` is specified, the primary monitor is used by default.
+- You can use either the device name (`\\.\DISPLAY1`) or the friendly name ("Dell U2723DE") with the `--device` option.
+- Device name matching is case-insensitive.
+- The monitor must support DDC/CI for this command to work.
+- Use `save-settings` before resetting if you want to preserve a backup of your current configuration.
+- Not all monitors support the color-only reset option. If `--color-only` fails, the monitor may only support a full factory reset.
+
+## SEE ALSO
+
+- [save-settings](save-settings.md) - Save current settings before resetting
+- [set-brightness](set-brightness.md) - Set monitor brightness
+- [set-contrast](set-contrast.md) - Set monitor contrast
+- [set-vcp](set-vcp.md) - Set any VCP feature value
+- [list](list.md) - List all monitors

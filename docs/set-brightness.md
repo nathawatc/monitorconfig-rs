@@ -20,7 +20,7 @@ The `set-brightness` command adjusts the brightness level of a monitor to the sp
 
 The brightness value to set (typically 0-100).
 
-**Type:** Unsigned integer (u32)  
+**Type:** Unsigned integer (u32)
 **Required:** Yes
 
 ## OPTIONS
@@ -29,14 +29,14 @@ The brightness value to set (typically 0-100).
 
 Specify the monitor by device name (e.g., `\\.\DISPLAY1`) or friendly name (e.g., "Dell U2723DE").
 
-**Type:** String  
+**Type:** String
 **Required:** No (defaults to primary monitor if neither --device nor --primary is specified)
 
 ### `-p, --primary`
 
 Target the primary monitor.
 
-**Type:** Flag  
+**Type:** Flag
 **Required:** No
 
 ## EXAMPLES
@@ -67,130 +67,23 @@ monitorconfig set-brightness 80 --device "\\.\DISPLAY1"
 monitorconfig set-brightness 80 --device "\\.\DISPLAY2"
 ```
 
-## PARAMETERS
+### Example 4: Set brightness silently (for scripts)
 
-### -ALSBrightness
-
-Set the ambient light sensor brightness value.  
-If brightness has been manually adjusted, the brightness policy has to be reverted by using the RevertToPolicy parameter.
-
-```yaml
-Type: Byte
-Parameter Sets: WMIOptions
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
+```bash
+monitorconfig set-brightness 50 --primary --silent
 ```
-
-### -ALSEnabled
-
-Controls whether or not brightness should be adjusted by the Ambient Light Sensor.
-If brightness has been manually adjusted, the brightness policy has to be reverted by using the RevertToPolicy parameter.
-
-```yaml
-Type: Boolean
-Parameter Sets: WMIOptions
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Monitor
-
-The monitor to adjust brightness settings for.
-
-```yaml
-Type: Monitor[]
-Parameter Sets: (All)
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: True (ByValue)
-Accept wildcard characters: False
-```
-
-### -RevertToPolicy
-
-Reverts the brightness policy to system managed if manual brightness values have previously been used.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: WMIOptions
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Timeout
-
-Sets the timeout for changing the brightness on WMIMonitors. It's rarely needed.
-
-```yaml
-Type: UInt32
-Parameter Sets: WMIOptions
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Value
-
-The brightness value to set.
-
-```yaml
-Type: UInt32
-Parameter Sets: Default
-Aliases:
-
-Required: True
-Position: 0
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-```yaml
-Type: UInt32
-Parameter Sets: WMIOptions
-Aliases:
-
-Required: False
-Position: 0
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### CommonParameters
-
-This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
-
-## INPUTS
-
-### MartinGC94.MonitorConfig.API.Monitor[]
-
-## OUTPUTS
-
-### System.Object
 
 ## NOTES
 
-## RELATED LINKS
+- Brightness values are typically in the range 0-100, but the actual range depends on the monitor hardware.
+- The monitor must support DDC/CI and VCP code 0x10 (Brightness).
+- If neither `--device` nor `--primary` is specified, the primary monitor is used by default.
+- You can use either the device name (`\\.\DISPLAY1`) or the friendly name ("Dell U2723DE") with the `--device` option.
+- Device name matching is case-insensitive.
+
+## SEE ALSO
+
+- [get-brightness](get-brightness.md) - Get monitor brightness
+- [set-contrast](set-contrast.md) - Set monitor contrast
+- [set-vcp](set-vcp.md) - Set any VCP feature value
+- [list](list.md) - List all monitors

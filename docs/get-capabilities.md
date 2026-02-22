@@ -14,7 +14,7 @@ monitorconfig get-capabilities [OPTIONS]
 
 The `get-capabilities` command retrieves the monitor's capabilities string, which describes what features and VCP codes the monitor supports. This string is in a standardized format defined by the DDC/CI specification.
 
-**Note:** Some manufacturers don't always fill out the capabilities string correctly, so it may not be 100% accurate.
+**Note:** Some manufacturers don't always fill out the capabilities string correctly, so it may not be 100% accurate. Use `scan-vcp` for a more reliable way to discover supported VCP codes.
 
 ## OPTIONS
 
@@ -22,14 +22,14 @@ The `get-capabilities` command retrieves the monitor's capabilities string, whic
 
 Specify the monitor by device name (e.g., `\\.\DISPLAY1`) or friendly name (e.g., "Dell U2723DE").
 
-**Type:** String  
+**Type:** String
 **Required:** No (defaults to primary monitor)
 
 ### `-p, --primary`
 
 Target the primary monitor.
 
-**Type:** Flag  
+**Type:** Flag
 **Required:** No
 
 ## EXAMPLES
@@ -46,36 +46,46 @@ Output (example):
 (prot(monitor)type(LCD)model(U2723DE)cmds(01 02 03 07 0C E3 F3)vcps(02 04 05 08 0B 0C 10 12 14 16 18 1A 52 60 62 AC AE B2 B6 C0 C6 C8 C9 CA CC(02 0A 01 02 03 04 05 06 08 09 0B 0C 0D 14 1E)D6(01 04 05)DC(00 02 03 05)DF E0 E1 E2(00 01 02 04 0E 12 14 19 0C 0D 0F 10 11 13)F0(0C)F1 F2)mswhql(1)mccs_ver(2.1))
 ```
 
-## PARAMETERS
+### Example 2: Get capabilities of specific monitor
 
-### -Monitor
-
-The monitor(s) to return details for.
-
-```yaml
-Type: VCPMonitor[]
-Parameter Sets: (All)
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: True (ByValue)
-Accept wildcard characters: False
+```bash
+monitorconfig get-capabilities --device "\\.\DISPLAY2"
 ```
 
-### CommonParameters
+### Example 3: Get capabilities using friendly name
 
-This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
+```bash
+monitorconfig get-capabilities --device "Dell U2723DE"
+```
 
-## INPUTS
+### Example 4: Save capabilities to a file
 
-### MartinGC94.MonitorConfig.API.VCP.VCPMonitor[]
+```bash
+monitorconfig get-capabilities --primary > capabilities.txt
+```
 
-## OUTPUTS
+## OUTPUT
 
-### MartinGC94.MonitorConfig.API.MonitorDetails
+The capabilities string is printed as raw text in the format defined by the MCCS (Monitor Control Command Set) specification. Key sections include:
+
+- **prot**: Protocol supported (e.g., `monitor`)
+- **type**: Display type (e.g., `LCD`)
+- **model**: Monitor model name
+- **cmds**: Supported DDC/CI commands
+- **vcp**: Supported VCP codes, with allowed values in parentheses for non-continuous codes
+- **mccs_ver**: MCCS version supported
 
 ## NOTES
 
-## RELATED LINKS
+- If neither `--device` nor `--primary` is specified, the primary monitor is used by default.
+- You can use either the device name (`\\.\DISPLAY1`) or the friendly name ("Dell U2723DE") with the `--device` option.
+- Device name matching is case-insensitive.
+- The monitor must support DDC/CI for this command to work.
+- The capabilities string is not always accurate — some manufacturers leave it incomplete or incorrect. Use `scan-vcp` to actively probe which VCP codes your monitor supports.
+- This command does not support `--json` output; the raw capabilities string is always returned as plain text.
+
+## SEE ALSO
+
+- [scan-vcp](get-vcp.md) - Actively scan for supported VCP codes
+- [get-vcp](get-vcp.md) - Get a specific VCP feature value
+- [list](list.md) - List all monitors

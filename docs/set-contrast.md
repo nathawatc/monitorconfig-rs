@@ -38,7 +38,6 @@ The Rust CLI provides color setting adjustment through multiple commands:
 | 0x6E | Green Black Level | Green drive/black level  | 0-100             |
 | 0x70 | Blue Black Level  | Blue drive/black level   | 0-100             |
 | 0x8A | Color Saturation  | Overall color saturation | 0-100             |
-| 0x5B | Gamma             | Gamma adjustment         | Varies            |
 
 ## ARGUMENTS
 
@@ -46,35 +45,35 @@ The Rust CLI provides color setting adjustment through multiple commands:
 
 The contrast value to set (typically 0-100).
 
-**Type:** Unsigned integer (u32)  
+**Type:** Unsigned integer (u32)
 **Required:** Yes
 
 ### `<CODE> <VALUE>` (for set-vcp)
 
 The VCP code and value to set.
 
-**Type:** u8, u32  
+**Type:** u8, u32
 **Required:** Yes
 
 ## OPTIONS
 
 ### `-d, --device <DEVICE>`
 
-Specify the monitor by device name or friendly name.
+Specify the monitor by device name (e.g., `\\.\DISPLAY1`) or friendly name (e.g., "Dell U2723DE").
 
-**Type:** String  
-**Required:** No
+**Type:** String
+**Required:** No (defaults to primary monitor if neither --device nor --primary is specified)
 
 ### `-p, --primary`
 
 Target the primary monitor.
 
-**Type:** Flag  
+**Type:** Flag
 **Required:** No
 
 ## EXAMPLES
 
-### Example 1: Set contrast
+### Example 1: Set contrast of primary monitor
 
 ```bash
 monitorconfig set-contrast 60 --primary
@@ -86,327 +85,57 @@ Output:
 Contrast set to 60
 ```
 
-## PARAMETERS
+### Example 2: Set contrast of specific monitor
 
-### -BlueDrive
-
-Adjusts the "drive" AKA "black" level for the blue color.
-
-```yaml
-Type: UInt32
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
+```bash
+monitorconfig set-contrast 75 --device "\\.\DISPLAY2"
 ```
 
-### -BlueGain
+### Example 3: Set contrast silently (for scripts)
 
-Adjusts the "gain" AKA "tint" level for the blue color.
-
-```yaml
-Type: UInt32
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
+```bash
+monitorconfig set-contrast 50 --primary --silent
 ```
 
-### -BlueSaturation
+### Example 4: Set color values using VCP codes
 
-Adjusts how saturated the blue color should be.
+```bash
+# Set red video gain
+monitorconfig set-vcp 0x16 50 --primary
 
-```yaml
-Type: UInt32
-Parameter Sets: (All)
-Aliases:
+# Set green video gain
+monitorconfig set-vcp 0x18 50 --primary
 
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
+# Set blue video gain
+monitorconfig set-vcp 0x1A 50 --primary
+
+# Set color temperature preset
+monitorconfig set-vcp 0x14 11 --primary
 ```
 
-### -ColorSaturation
+### Example 5: Adjust contrast and save
 
-Adjusts how saturated the overall image should be.
+```bash
+# Set contrast
+monitorconfig set-contrast 65 --primary
 
-```yaml
-Type: UInt32
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
+# Save settings to monitor's non-volatile memory
+monitorconfig save-settings --primary
 ```
-
-### -ColorTemperature
-
-Changes the color temperature on the display.
-
-```yaml
-Type: VCPMonitorColorTemperature
-Parameter Sets: (All)
-Aliases:
-Accepted values: _None, _4000k, _5000k, _6500k, _7500k, _8200k, _9300k, _10000k, _11500k
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Contrast
-
-Adjusts the contrast level on the display.
-
-```yaml
-Type: UInt32
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -CyanSaturation
-
-Adjusts how saturated the cyan color should be.
-
-```yaml
-Type: UInt32
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Gamma
-
-Adjusts the gamma level on the display.
-
-```yaml
-Type: UInt32
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -GreenDrive
-
-Adjusts the "drive" AKA "black" level for the green color.
-
-```yaml
-Type: UInt32
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -GreenGain
-
-Adjusts the "gain" AKA "tint" level for the green color.
-
-```yaml
-Type: UInt32
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -GreenSaturation
-
-Adjusts how saturated the green color should be.
-
-```yaml
-Type: UInt32
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -MagentaSaturation
-
-Adjusts how saturated the magenta color should be.
-
-```yaml
-Type: UInt32
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Monitor
-
-The monitor(s) to get color info from.
-
-```yaml
-Type: VCPMonitor[]
-Parameter Sets: (All)
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: True (ByValue)
-Accept wildcard characters: False
-```
-
-### -RedDrive
-
-Adjusts the "drive" AKA "black" level for the red color.
-
-```yaml
-Type: UInt32
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -RedGain
-
-Adjusts the "gain" AKA "tint" level for the red color.
-
-```yaml
-Type: UInt32
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -RedSaturation
-
-Adjusts how saturated the red color should be.
-
-```yaml
-Type: UInt32
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -YellowSaturation
-
-Adjusts how saturated the yellow color should be.
-
-```yaml
-Type: UInt32
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -GrayScaleBlackExpansion
-
-Expands the gray scale in the near black region, making darks appear more light or gray.  
-Values between 0-3 can be used.
-
-```yaml
-Type: UInt32
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -GrayScaleWhiteExpansion
-
-Expands the gray scale in the near white region, making whites appear more dark or gray.  
-Values between 0-3 can be used.
-
-```yaml
-Type: UInt32
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### CommonParameters
-
-This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
-
-## INPUTS
-
-### MartinGC94.MonitorConfig.API.VCP.VCPMonitor[]
-
-## OUTPUTS
-
-### System.Object
 
 ## NOTES
 
-## RELATED LINKS
+- Contrast values are typically in the range 0-100, but the actual range depends on the monitor hardware.
+- The monitor must support DDC/CI and VCP code 0x12 (Contrast).
+- If neither `--device` nor `--primary` is specified, the primary monitor is used by default.
+- You can use either the device name (`\\.\DISPLAY1`) or the friendly name ("Dell U2723DE") with the `--device` option.
+- Device name matching is case-insensitive.
+- For color-related VCP codes, use `scan-vcp` to discover which codes your monitor supports and their valid ranges.
+
+## SEE ALSO
+
+- [get-contrast](get-contrast.md) - Get monitor contrast
+- [set-brightness](set-brightness.md) - Set monitor brightness
+- [set-vcp](set-vcp.md) - Set any VCP feature value
+- [save-settings](save-settings.md) - Save current settings to monitor memory
+- [list](list.md) - List all monitors

@@ -12,7 +12,7 @@ monitorconfig save-settings [OPTIONS]
 
 ## DESCRIPTION
 
-The `save-settings` command instructs the monitor to save its current settings to non-volatile memory. This uses VCP code 0x0C (Save Current Settings).
+The `save-settings` command instructs the monitor to save its current settings to non-volatile memory. This uses the dxva2 `SaveCurrentMonitorSettings` function internally.
 
 After making adjustments to brightness, contrast, color, or other settings, use this command to ensure the changes persist after the monitor is powered off.
 
@@ -22,14 +22,14 @@ After making adjustments to brightness, contrast, color, or other settings, use 
 
 Specify the monitor by device name (e.g., `\\.\DISPLAY1`) or friendly name (e.g., "Dell U2723DE").
 
-**Type:** String  
+**Type:** String
 **Required:** No (defaults to primary monitor)
 
 ### `-p, --primary`
 
 Target the primary monitor.
 
-**Type:** Flag  
+**Type:** Flag
 **Required:** No
 
 ## EXAMPLES
@@ -63,36 +63,25 @@ monitorconfig save-settings --primary
 monitorconfig save-settings --device "\\.\DISPLAY2"
 ```
 
-## PARAMETERS
+### Example 4: Save settings silently (for scripts)
 
-### -Monitor
-
-The monitor(s) where the modified settings should be saved.
-
-```yaml
-Type: VCPMonitor[]
-Parameter Sets: (All)
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: True (ByValue)
-Accept wildcard characters: False
+```bash
+monitorconfig save-settings --primary --silent
 ```
-
-### CommonParameters
-
-This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
-
-## INPUTS
-
-### MartinGC94.MonitorConfig.API.VCP.VCPMonitor[]
-
-## OUTPUTS
-
-### System.Object
 
 ## NOTES
 
-## RELATED LINKS
+- If neither `--device` nor `--primary` is specified, the primary monitor is used by default.
+- You can use either the device name (`\\.\DISPLAY1`) or the friendly name ("Dell U2723DE") with the `--device` option.
+- Device name matching is case-insensitive.
+- The monitor must support DDC/CI for this command to work.
+- Not all monitors support saving settings via DDC/CI. If this command fails, the monitor may not implement the save function.
+- Settings saved to monitor memory persist across power cycles. Use `reset-defaults` to revert to factory settings.
+
+## SEE ALSO
+
+- [reset-defaults](reset-defaults.md) - Reset monitor to factory defaults
+- [set-brightness](set-brightness.md) - Set monitor brightness
+- [set-contrast](set-contrast.md) - Set monitor contrast
+- [set-vcp](set-vcp.md) - Set any VCP feature value
+- [list](list.md) - List all monitors

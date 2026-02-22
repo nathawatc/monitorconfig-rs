@@ -103,10 +103,11 @@ Returns brightness information as a JSON object:
 - The monitor must support DDC/CI and VCP code 0x10 (Brightness)
 - If neither `--device` nor `--primary` is specified, the primary monitor is used by default
 - You can use either the device name (`\\.\DISPLAY1`) or the friendly name ("Dell U2723DE") with the `--device` option
+- Device name matching is case-insensitive
 
 ## SEE ALSO
 
-- [set-brightness](Set-MonitorBrightness.md) - Set monitor brightness
-- [get-contrast](Set-MonitorBrightness.md#get-contrast) - Get monitor contrast
-- [get-vcp](Get-MonitorVCPResponse.md) - Get any VCP feature value
-- [list](Get-Monitor.md) - List all monitors
+- [set-brightness](set-brightness.md) - Set monitor brightness
+- [get-contrast](get-contrast.md) - Get monitor contrast
+- [get-vcp](get-vcp.md) - Get any VCP feature value
+- [list](list.md) - List all monitors
