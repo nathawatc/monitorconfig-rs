@@ -20,11 +20,6 @@ pub mod dxva2 {
 
         pub fn DestroyPhysicalMonitor(hmonitor: HANDLE) -> i32;
 
-        pub fn DestroyPhysicalMonitors(
-            dwphysicalmonitorarraysize: u32,
-            pphysicalmonitorarray: *const PHYSICAL_MONITOR,
-        ) -> i32;
-
         pub fn GetMonitorBrightness(
             hmonitor: HANDLE,
             pdwminimumbrightness: *mut u32,
@@ -99,8 +94,10 @@ impl MonitorEnumerator {
         let mut monitors = Vec::new();
 
         unsafe {
+            // HDC is `isize` in windows-sys, so pass 0 for a null HDC
+            // rather than std::ptr::null_mut() which is a pointer type.
             let result = EnumDisplayMonitors(
-                std::ptr::null_mut(),
+                0,
                 std::ptr::null(),
                 Some(enum_monitor_callback),
                 &mut monitors as *mut _ as isize,
@@ -172,7 +169,9 @@ pub fn destroy_physical_monitor(handle: HANDLE) -> Result<()> {
     unsafe {
         let result = dxva2::DestroyPhysicalMonitor(handle);
         if result == 0 {
-            return Err(crate::MonitorError::EnumerationFailed);
+            return Err(crate::MonitorError::WindowsApi(
+                "DestroyPhysicalMonitor failed".to_string(),
+            ));
         }
         Ok(())
     }
