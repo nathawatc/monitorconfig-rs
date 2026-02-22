@@ -245,15 +245,6 @@ monitorconfig get-capabilities --primary >> capabilities.txt
 
 ## Technical Details
 
-### Dependencies (Latest Versions)
-
-- `windows = "0.62.2"` - Windows API bindings
-- `clap = "4.5.55"` - Command-line argument parsing
-- `anyhow = "1.0.100"` - Error handling
-- `serde = "1.0.228"` - Serialization framework
-- `serde_json = "1.0.149"` - JSON support
-- `thiserror = "2.0.18"` - Error derive macros
-
 ### Architecture
 
 The tool is structured into several modules:
