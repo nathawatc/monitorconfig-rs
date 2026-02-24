@@ -1,12 +1,12 @@
 [package]
 name = "monitorconfig"
 version = "1.2.0"
-authors = ["Scott-Nx <158021536+Scott-Nx@users.noreply.github.com>"]
+authors = ["nathawat <nathawat@noreply.codeberg.org>"]
 edition = "2024"
 description = "Native Windows CLI tool for managing monitor settings via DDC/CI"
-documentation = "https://github.com/Scott-Nx/MonitorConfig_RS/tree/main/docs"
+documentation = "https://codeberg.org/nathawat/monitorconfig-rs/src/branch/main/docs"
 readme = "README.md"
-repository = "https://github.com/Scott-Nx/MonitorConfig_RS"
+repository = "https://codeberg.org/nathawat/monitorconfig-rs"
 license = "MIT"
 keywords = ["monitor", "display", "brightness", "ddc-ci", "windows"]
 categories = ["command-line-utilities", "hardware-support", "os::windows-apis"]
