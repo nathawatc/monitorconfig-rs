@@ -6,12 +6,35 @@ on:
       - "v*"
   workflow_dispatch:
 
+env:
+  CARGO_TERM_COLOR: always
+  WINDOWS_TARGET: x86_64-pc-windows-gnu
+
 jobs:
   publish:
     name: Publish Cargo Package
     runs-on: codeberg-small
 
     steps:
+      - name: Validate required variables
+        env:
+          CODEBERG_OWNER: ${{ vars.CODEBERG_OWNER }}
+          CODEBERG_TOKEN: ${{ secrets.CODEBERG_TOKEN }}
+        run: |
+          missing=0
+          if [ -z "$CODEBERG_OWNER" ]; then
+            echo "::error::Repository variable CODEBERG_OWNER is not set. Go to Settings > Actions > Variables and add it (e.g. 'nathawat')."
+            missing=1
+          fi
+          if [ -z "$CODEBERG_TOKEN" ]; then
+            echo "::error::Repository secret CODEBERG_TOKEN is not set. Go to Settings > Actions > Secrets and add a token with package:write scope."
+            missing=1
+          fi
+          if [ "$missing" -eq 1 ]; then
+            exit 1
+          fi
+          echo "CODEBERG_OWNER=${CODEBERG_OWNER}" >> "$GITHUB_ENV"
+
       - name: Checkout repository
         uses: actions/checkout@v6
 
@@ -19,30 +42,31 @@ jobs:
         uses: https://github.com/dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
+          targets: ${{ env.WINDOWS_TARGET }}
 
       - name: Install MinGW-w64 cross-compilation toolchain
-        run: sudo apt-get update -q && sudo apt-get install -y gcc-mingw-w64-x86-64
-
-      - name: Add Windows target
-        run: rustup target add x86_64-pc-windows-gnu
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y --no-install-recommends gcc-mingw-w64-x86-64
 
       - name: Configure Codeberg Cargo registry
-        env:
-          CODEBERG_OWNER: ${{ vars.CODEBERG_OWNER }}
-        run: |
-          mkdir -p ~/.cargo
-          printf '[registries.codeberg]\nindex = "sparse+https://codeberg.org/api/packages/%s/cargo/"\n' "$CODEBERG_OWNER" >> ~/.cargo/config.toml
-          echo "--- config.toml ---"
-          cat ~/.cargo/config.toml
-
-      - name: Configure Cargo credentials
         env:
           CODEBERG_TOKEN: ${{ secrets.CODEBERG_TOKEN }}
         run: |
           mkdir -p ~/.cargo
-          printf '[registries.codeberg]\ntoken = "Bearer %s"\n' "$CODEBERG_TOKEN" >> ~/.cargo/credentials.toml
+          printf '[registries.codeberg]\nindex = "sparse+https://codeberg.org/api/packages/%s/cargo/"\n' "$CODEBERG_OWNER" > ~/.cargo/config.toml
+          printf '[registries.codeberg]\ntoken = "Bearer %s"\n' "$CODEBERG_TOKEN" > ~/.cargo/credentials.toml
+          echo "--- config.toml ---"
+          cat ~/.cargo/config.toml
           echo "--- credentials.toml (token masked) ---"
-          grep -o '^\[.*\]' ~/.cargo/credentials.toml
+          grep -o '^\[.*\]' ~/.cargo/credentials.toml || true
+
+      - name: Verify registry is reachable
+        run: |
+          echo "Checking registry index URL..."
+          curl -sSf "https://codeberg.org/api/packages/${CODEBERG_OWNER}/cargo/api/v1/crates" -o /dev/null \
+            && echo "Registry is reachable" \
+            || echo "::warning::Registry endpoint returned an error — publish may still succeed if this is a new registry"
 
       - name: Publish package
-        run: cargo publish --registry codeberg --target x86_64-pc-windows-gnu
+        run: cargo publish --registry codeberg --target "${WINDOWS_TARGET}"
