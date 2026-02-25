@@ -11,7 +11,7 @@ license = "MIT"
 keywords = ["monitor", "display", "brightness", "ddc-ci", "windows"]
 categories = ["command-line-utilities", "hardware-support", "os::windows-apis"]
 exclude = ["docs"]
-publish = false
+publish = ["codeberg"]
 
 [features]
 # Build without console window for Task Scheduler/background tasks

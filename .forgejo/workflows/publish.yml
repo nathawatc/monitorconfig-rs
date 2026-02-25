@@ -1,0 +1,46 @@
+name: Publish to Codeberg Package Registry
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  publish:
+    name: Publish Cargo Package
+    runs-on: codeberg-small
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+
+      - name: Install MinGW-w64 cross-compilation toolchain
+        run: sudo apt-get update -q && sudo apt-get install -y gcc-mingw-w64-x86-64
+
+      - name: Add Windows target
+        run: rustup target add x86_64-pc-windows-gnu
+
+      - name: Configure Codeberg Cargo registry
+        run: |
+          mkdir -p ~/.cargo
+          cat >> ~/.cargo/config.toml << 'EOF'
+[registries.codeberg]
+index = "sparse+https://codeberg.org/api/packages/${{ vars.CODEBERG_OWNER }}/cargo/"
+EOF
+
+      - name: Configure Cargo credentials
+        run: |
+          mkdir -p ~/.cargo
+          cat >> ~/.cargo/credentials.toml << 'EOF'
+[registries.codeberg]
+token = "Bearer ${{ secrets.CODEBERG_TOKEN }}"
+EOF
+
+      - name: Publish package
+        run: cargo publish --registry codeberg --target x86_64-pc-windows-gnu
