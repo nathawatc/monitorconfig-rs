@@ -27,14 +27,22 @@ jobs:
         run: rustup target add x86_64-pc-windows-gnu
 
       - name: Configure Codeberg Cargo registry
+        env:
+          CODEBERG_OWNER: ${{ vars.CODEBERG_OWNER }}
         run: |
           mkdir -p ~/.cargo
-          printf '[registries.codeberg]\nindex = "sparse+https://codeberg.org/api/packages/${{ vars.CODEBERG_OWNER }}/cargo/"\n' >> ~/.cargo/config.toml
+          printf '[registries.codeberg]\nindex = "sparse+https://codeberg.org/api/packages/%s/cargo/"\n' "$CODEBERG_OWNER" >> ~/.cargo/config.toml
+          echo "--- config.toml ---"
+          cat ~/.cargo/config.toml
 
       - name: Configure Cargo credentials
+        env:
+          CODEBERG_TOKEN: ${{ secrets.CODEBERG_TOKEN }}
         run: |
           mkdir -p ~/.cargo
-          printf '[registries.codeberg]\ntoken = "Bearer ${{ secrets.CODEBERG_TOKEN }}"\n' >> ~/.cargo/credentials.toml
+          printf '[registries.codeberg]\ntoken = "Bearer %s"\n' "$CODEBERG_TOKEN" >> ~/.cargo/credentials.toml
+          echo "--- credentials.toml (token masked) ---"
+          grep -o '^\[.*\]' ~/.cargo/credentials.toml
 
       - name: Publish package
         run: cargo publish --registry codeberg --target x86_64-pc-windows-gnu
