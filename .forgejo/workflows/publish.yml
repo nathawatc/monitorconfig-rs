@@ -1,4 +1,4 @@
-name: Publish to Codeberg Package Registry
+name: Publish Package
 
 on:
   push:
@@ -29,18 +29,12 @@ jobs:
       - name: Configure Codeberg Cargo registry
         run: |
           mkdir -p ~/.cargo
-          cat >> ~/.cargo/config.toml << 'EOF'
-[registries.codeberg]
-index = "sparse+https://codeberg.org/api/packages/${{ vars.CODEBERG_OWNER }}/cargo/"
-EOF
+          printf '[registries.codeberg]\nindex = "sparse+https://codeberg.org/api/packages/${{ vars.CODEBERG_OWNER }}/cargo/"\n' >> ~/.cargo/config.toml
 
       - name: Configure Cargo credentials
         run: |
           mkdir -p ~/.cargo
-          cat >> ~/.cargo/credentials.toml << 'EOF'
-[registries.codeberg]
-token = "Bearer ${{ secrets.CODEBERG_TOKEN }}"
-EOF
+          printf '[registries.codeberg]\ntoken = "Bearer ${{ secrets.CODEBERG_TOKEN }}"\n' >> ~/.cargo/credentials.toml
 
       - name: Publish package
         run: cargo publish --registry codeberg --target x86_64-pc-windows-gnu
