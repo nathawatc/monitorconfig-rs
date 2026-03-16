@@ -42,6 +42,8 @@ pub struct PhysicalMonitor {
 }
 
 impl PhysicalMonitor {
+    /// # Safety
+    /// `hmonitor` must be a valid `HMONITOR` handle.
     pub unsafe fn new(hmonitor: HMONITOR, physical_monitor: &native::PHYSICAL_MONITOR) -> Result<Self> {
         let monitor_info = unsafe { native::get_monitor_info(hmonitor)? };
 
@@ -191,12 +193,12 @@ pub fn enumerate_monitors() -> Result<Vec<PhysicalMonitor>> {
 pub fn find_monitor(device_name: &str) -> Result<PhysicalMonitor> {
     let monitors = enumerate_monitors()?;
 
-    let needle = device_name.to_lowercase();
     monitors
         .into_iter()
         .find(|m| {
             let info = m.info();
-            info.device_name.to_lowercase() == needle || info.friendly_name.to_lowercase() == needle
+            info.device_name.eq_ignore_ascii_case(device_name)
+                || info.friendly_name.eq_ignore_ascii_case(device_name)
         })
         .ok_or_else(|| crate::MonitorError::MonitorNotFound(device_name.to_string()))
 }
