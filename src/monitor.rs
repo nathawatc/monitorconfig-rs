@@ -214,3 +214,74 @@ pub fn get_primary_monitor() -> Result<PhysicalMonitor> {
         .find(|m| m.info().is_primary)
         .ok_or_else(|| crate::MonitorError::MonitorNotFound("Primary monitor".to_string()))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_monitor_info_serialization() {
+        let info = MonitorInfo {
+            device_name: "\\\\.\\DISPLAY1".to_string(),
+            friendly_name: "Dell U2723DE".to_string(),
+            is_primary: true,
+        };
+
+        let json = serde_json::to_string(&info).unwrap();
+        assert_eq!(
+            json,
+            r#"{"device_name":"\\\\.\\DISPLAY1","friendly_name":"Dell U2723DE","is_primary":true}"#
+        );
+    }
+
+    #[test]
+    fn test_brightness_info_serialization() {
+        let info = BrightnessInfo {
+            minimum: 0,
+            current: 75,
+            maximum: 100,
+        };
+
+        let json = serde_json::to_string(&info).unwrap();
+        assert_eq!(json, r#"{"minimum":0,"current":75,"maximum":100}"#);
+    }
+
+    #[test]
+    fn test_contrast_info_serialization() {
+        let info = ContrastInfo {
+            minimum: 0,
+            current: 50,
+            maximum: 100,
+        };
+
+        let json = serde_json::to_string(&info).unwrap();
+        assert_eq!(json, r#"{"minimum":0,"current":50,"maximum":100}"#);
+    }
+
+    #[test]
+    fn test_physical_monitor_invalid_handle() {
+        let pm = native::PHYSICAL_MONITOR {
+            h_physical_monitor: std::ptr::null_mut(),
+            sz_physical_monitor_description: [0; 128],
+        };
+        let result = unsafe { PhysicalMonitor::new(std::ptr::null_mut(), &pm) };
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_enumerate_monitors_no_panic() {
+        // Should either succeed (0 monitors) or return an error, but not panic
+        let _ = enumerate_monitors();
+    }
+
+    #[test]
+    fn test_find_monitor_not_found() {
+        let result = find_monitor("NonExistentMonitor_123");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_get_primary_monitor_no_panic() {
+        let _ = get_primary_monitor();
+    }
+}

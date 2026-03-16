@@ -1111,3 +1111,79 @@ pub const KNOWN_VCP_CODES: &[VcpFeatureInfo] = &[
 pub fn get_vcp_code_info(code: u8) -> Option<&'static VcpFeatureInfo> {
     KNOWN_VCP_CODES.iter().find(|info| info.code == code)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_get_vcp_code_info_known() {
+        let info = get_vcp_code_info(0x10).unwrap();
+        assert_eq!(info.code, 0x10);
+        assert_eq!(info.name, "Luminance");
+
+        let info2 = get_vcp_code_info(0x12).unwrap();
+        assert_eq!(info2.code, 0x12);
+        assert_eq!(info2.name, "Contrast");
+    }
+
+    #[test]
+    fn test_get_vcp_code_info_unknown() {
+        // Find a code that isn't in the list (e.g. 0x07)
+        let info = get_vcp_code_info(0x07);
+        assert!(info.is_none());
+    }
+
+    #[test]
+    fn test_vcp_feature_response_serialization() {
+        let response = VcpFeatureResponse {
+            vcp_code: 0x10,
+            current_value: 50,
+            maximum_value: 100,
+            code_type: VcpCodeType::SetParameter,
+        };
+
+        let json = serde_json::to_string(&response).unwrap();
+        assert_eq!(
+            json,
+            r#"{"vcp_code":16,"current_value":50,"maximum_value":100,"code_type":"SetParameter"}"#
+        );
+    }
+
+    #[test]
+    fn test_vcp_feature_response_momentary_serialization() {
+        let response = VcpFeatureResponse {
+            vcp_code: 0x01,
+            current_value: 1,
+            maximum_value: 1,
+            code_type: VcpCodeType::Momentary,
+        };
+
+        let json = serde_json::to_string(&response).unwrap();
+        assert_eq!(
+            json,
+            r#"{"vcp_code":1,"current_value":1,"maximum_value":1,"code_type":"Momentary"}"#
+        );
+    }
+
+    #[test]
+    fn test_vcp_monitor_new() {
+        let handle = std::ptr::null_mut();
+        let monitor = VcpMonitor::new(handle);
+        assert_eq!(monitor.handle, handle);
+    }
+
+    #[test]
+    fn test_vcp_feature_info_serialization() {
+        let info = VcpFeatureInfo {
+            code: 0x10,
+            name: "Luminance",
+            description: "Brightness",
+        };
+        let json = serde_json::to_string(&info).unwrap();
+        assert_eq!(
+            json,
+            r#"{"code":16,"name":"Luminance","description":"Brightness"}"#
+        );
+    }
+}

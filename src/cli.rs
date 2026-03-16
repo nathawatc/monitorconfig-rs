@@ -630,3 +630,121 @@ fn reset_defaults(
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_hex() {
+        assert_eq!(parse_hex("0x10"), Ok(16));
+        assert_eq!(parse_hex("0X1A"), Ok(26));
+        assert_eq!(parse_hex("10"), Ok(10));
+        assert_eq!(parse_hex("255"), Ok(255));
+        assert!(parse_hex("256").is_err());
+        assert!(parse_hex("0xG1").is_err());
+        assert!(parse_hex("").is_err());
+    }
+
+    #[test]
+    fn test_cli_parsing_list() {
+        let cli = Cli::parse_from(["monitorconfig", "list"]);
+        match cli.command {
+            Commands::List { json } => assert!(!json),
+            _ => panic!("Expected List command"),
+        }
+
+        let cli_json = Cli::parse_from(["monitorconfig", "list", "--json"]);
+        match cli_json.command {
+            Commands::List { json } => assert!(json),
+            _ => panic!("Expected List command"),
+        }
+    }
+
+    #[test]
+    fn test_cli_parsing_set_brightness() {
+        let cli = Cli::parse_from(["monitorconfig", "set-brightness", "75"]);
+        match cli.command {
+            Commands::SetBrightness {
+                value,
+                device,
+                primary,
+                ignore_power_state,
+            } => {
+                assert_eq!(value, 75);
+                assert_eq!(device, None);
+                assert!(!primary);
+                assert!(!ignore_power_state);
+            }
+            _ => panic!("Expected SetBrightness command"),
+        }
+
+        let cli_full = Cli::parse_from([
+            "monitorconfig",
+            "set-brightness",
+            "50",
+            "--device",
+            "DISPLAY1",
+            "--ignore-power-state",
+        ]);
+        match cli_full.command {
+            Commands::SetBrightness {
+                value,
+                device,
+                primary,
+                ignore_power_state,
+            } => {
+                assert_eq!(value, 50);
+                assert_eq!(device, Some("DISPLAY1".to_string()));
+                assert!(!primary);
+                assert!(ignore_power_state);
+            }
+            _ => panic!("Expected SetBrightness command"),
+        }
+    }
+
+    #[test]
+    fn test_cli_parsing_set_vcp() {
+        // Test with hex code
+        let cli = Cli::parse_from(["monitorconfig", "set-vcp", "0x10", "100"]);
+        match cli.command {
+            Commands::SetVcp { code, value, .. } => {
+                assert_eq!(code, 16);
+                assert_eq!(value, 100);
+            }
+            _ => panic!("Expected SetVcp command"),
+        }
+
+        // Test with global flags
+        let cli_global = Cli::parse_from([
+            "monitorconfig",
+            "--silent",
+            "--wait",
+            "5",
+            "set-vcp",
+            "10",
+            "50",
+            "--primary",
+            "--retry",
+            "3",
+        ]);
+        assert!(cli_global.silent);
+        assert_eq!(cli_global.wait, 5);
+
+        match cli_global.command {
+            Commands::SetVcp {
+                code,
+                value,
+                primary,
+                retry,
+                ..
+            } => {
+                assert_eq!(code, 10);
+                assert_eq!(value, 50);
+                assert!(primary);
+                assert_eq!(retry, 3);
+            }
+            _ => panic!("Expected SetVcp command"),
+        }
+    }
+}

@@ -184,3 +184,59 @@ pub unsafe fn destroy_physical_monitor(handle: HANDLE) -> Result<()> {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_physical_monitor_description() {
+        let mut desc = [0u16; 128];
+        let text = "Test Monitor";
+        for (i, c) in text.encode_utf16().enumerate() {
+            desc[i] = c;
+        }
+
+        let pm = PHYSICAL_MONITOR {
+            h_physical_monitor: std::ptr::null_mut(),
+            sz_physical_monitor_description: desc,
+        };
+
+        assert_eq!(pm.description(), "Test Monitor");
+    }
+
+    #[test]
+    fn test_physical_monitor_description_no_null() {
+        let mut desc = [0u16; 128];
+        let text = "A".repeat(128);
+        for (i, c) in text.encode_utf16().enumerate() {
+            desc[i] = c;
+        }
+
+        let pm = PHYSICAL_MONITOR {
+            h_physical_monitor: std::ptr::null_mut(),
+            sz_physical_monitor_description: desc,
+        };
+
+        assert_eq!(pm.description(), "A".repeat(128));
+    }
+
+    #[test]
+    fn test_get_monitor_info_invalid() {
+        let result = unsafe { get_monitor_info(std::ptr::null_mut()) };
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_get_physical_monitors_invalid() {
+        let result = unsafe { get_physical_monitors(std::ptr::null_mut()) };
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_destroy_physical_monitor_invalid() {
+        let _result = unsafe { destroy_physical_monitor(std::ptr::null_mut()) };
+        // Windows API might return success (non-zero) for null handles,
+        // so we just ensure it doesn't panic here.
+    }
+}
