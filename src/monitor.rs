@@ -42,7 +42,7 @@ pub struct PhysicalMonitor {
 }
 
 impl PhysicalMonitor {
-    pub fn new(hmonitor: HMONITOR, physical_monitor: &native::PHYSICAL_MONITOR) -> Result<Self> {
+    pub unsafe fn new(hmonitor: HMONITOR, physical_monitor: &native::PHYSICAL_MONITOR) -> Result<Self> {
         let monitor_info = unsafe { native::get_monitor_info(hmonitor)? };
 
         // Extract the actual device name from MONITORINFOEXW.szDevice (e.g. \\.\DISPLAY1)
@@ -171,7 +171,7 @@ pub fn enumerate_monitors() -> Result<Vec<PhysicalMonitor>> {
         let physical_monitors = unsafe { native::get_physical_monitors(hmonitor)? };
 
         for pm in &physical_monitors {
-            match PhysicalMonitor::new(hmonitor, pm) {
+            match unsafe { PhysicalMonitor::new(hmonitor, pm) } {
                 Ok(monitor) => monitors.push(monitor),
                 Err(e) => {
                     // PhysicalMonitor was not created, so its Drop will not
