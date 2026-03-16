@@ -122,7 +122,10 @@ unsafe extern "system" fn enum_monitor_callback(
     1
 }
 
-pub fn get_monitor_info(hmonitor: HMONITOR) -> Result<MONITORINFOEXW> {
+/// # Safety
+///
+/// `hmonitor` must be a valid monitor handle.
+pub unsafe fn get_monitor_info(hmonitor: HMONITOR) -> Result<MONITORINFOEXW> {
     unsafe {
         let mut info: MONITORINFOEXW = std::mem::zeroed();
         info.monitorInfo.cbSize = std::mem::size_of::<MONITORINFOEXW>() as u32;
@@ -136,7 +139,10 @@ pub fn get_monitor_info(hmonitor: HMONITOR) -> Result<MONITORINFOEXW> {
     }
 }
 
-pub fn get_physical_monitors(hmonitor: HMONITOR) -> Result<Vec<PHYSICAL_MONITOR>> {
+/// # Safety
+///
+/// `hmonitor` must be a valid monitor handle.
+pub unsafe fn get_physical_monitors(hmonitor: HMONITOR) -> Result<Vec<PHYSICAL_MONITOR>> {
     unsafe {
         let mut count = 0u32;
         let result = dxva2::GetNumberOfPhysicalMonitorsFromHMONITOR(hmonitor, &mut count);
@@ -164,7 +170,10 @@ pub fn get_physical_monitors(hmonitor: HMONITOR) -> Result<Vec<PHYSICAL_MONITOR>
     }
 }
 
-pub fn destroy_physical_monitor(handle: HANDLE) -> Result<()> {
+/// # Safety
+///
+/// `handle` must be a valid physical monitor handle.
+pub unsafe fn destroy_physical_monitor(handle: HANDLE) -> Result<()> {
     unsafe {
         let result = dxva2::DestroyPhysicalMonitor(handle);
         if result == 0 {

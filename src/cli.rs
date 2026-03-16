@@ -55,6 +55,10 @@ pub enum Commands {
         /// Use primary monitor
         #[arg(short, long)]
         primary: bool,
+
+        /// Ignore power state check
+        #[arg(long)]
+        ignore_power_state: bool,
     },
 
     /// Get contrast level of a monitor
@@ -84,6 +88,10 @@ pub enum Commands {
         /// Use primary monitor
         #[arg(short, long)]
         primary: bool,
+
+        /// Ignore power state check
+        #[arg(long)]
+        ignore_power_state: bool,
     },
 
     /// Get VCP feature value
@@ -129,6 +137,10 @@ pub enum Commands {
         /// Seconds to wait between retry attempts
         #[arg(long, value_name = "SECONDS", default_value = "5")]
         retry_delay: u64,
+
+        /// Ignore power state check
+        #[arg(long)]
+        ignore_power_state: bool,
     },
 
     /// List all VCP codes
@@ -173,6 +185,10 @@ pub enum Commands {
         /// Use primary monitor
         #[arg(short, long)]
         primary: bool,
+
+        /// Ignore power state check
+        #[arg(long)]
+        ignore_power_state: bool,
     },
 
     /// Reset monitor to factory defaults
@@ -188,6 +204,10 @@ pub enum Commands {
         /// Only reset color settings
         #[arg(short, long)]
         color_only: bool,
+
+        /// Ignore power state check
+        #[arg(long)]
+        ignore_power_state: bool,
     },
 }
 
@@ -220,7 +240,8 @@ pub fn run() -> Result<()> {
             value,
             device,
             primary,
-        } => set_brightness(value, device, primary, silent),
+            ignore_power_state,
+        } => set_brightness(value, device, primary, ignore_power_state, silent),
         Commands::GetContrast {
             device,
             primary,
@@ -230,7 +251,8 @@ pub fn run() -> Result<()> {
             value,
             device,
             primary,
-        } => set_contrast(value, device, primary, silent),
+            ignore_power_state,
+        } => set_contrast(value, device, primary, ignore_power_state, silent),
         Commands::GetVcp {
             code,
             device,
@@ -244,7 +266,17 @@ pub fn run() -> Result<()> {
             primary,
             retry,
             retry_delay,
-        } => set_vcp(code, value, device, primary, retry, retry_delay, silent),
+            ignore_power_state,
+        } => set_vcp(
+            code,
+            value,
+            device,
+            primary,
+            retry,
+            retry_delay,
+            ignore_power_state,
+            silent,
+        ),
         Commands::ListVcp { json } => list_vcp(json, silent),
         Commands::ScanVcp {
             device,
@@ -252,23 +284,50 @@ pub fn run() -> Result<()> {
             json,
         } => scan_vcp(device, primary, json, silent),
         Commands::GetCapabilities { device, primary } => get_capabilities(device, primary, silent),
-        Commands::SaveSettings { device, primary } => save_settings(device, primary, silent),
+        Commands::SaveSettings {
+            device,
+            primary,
+            ignore_power_state,
+        } => save_settings(device, primary, ignore_power_state, silent),
         Commands::ResetDefaults {
             device,
             primary,
             color_only,
-        } => reset_defaults(device, primary, color_only, silent),
+            ignore_power_state,
+        } => reset_defaults(device, primary, color_only, ignore_power_state, silent),
     }
 }
 
-fn get_monitor(device: Option<String>, primary: bool) -> Result<monitor::PhysicalMonitor> {
+fn get_monitor(device: Option<&str>, primary: bool) -> Result<monitor::PhysicalMonitor> {
     if primary {
         monitor::get_primary_monitor()
     } else if let Some(device_name) = device {
-        monitor::find_monitor(&device_name)
+        monitor::find_monitor(device_name)
     } else {
         monitor::get_primary_monitor()
     }
+}
+
+fn check_power_state(
+    mon: &monitor::PhysicalMonitor,
+    ignore_power_state: bool,
+    vcp_code: Option<u8>,
+) -> Result<()> {
+    if !ignore_power_state {
+        if vcp_code == Some(vcp::codes::POWER_MODE) {
+            return Ok(());
+        }
+        let vcp_mon = vcp::VcpMonitor::new(mon.handle());
+        if vcp_mon
+            .get_vcp_feature(vcp::codes::POWER_MODE)
+            .is_ok_and(|response| response.current_value != 1)
+        {
+            return Err(crate::MonitorError::UnsupportedOperation(
+                "Monitor power state is not On. Skipping command to prevent firmware hang. Use --ignore-power-state to override.".to_string()
+            ));
+        }
+    }
+    Ok(())
 }
 
 fn list_monitors(json: bool, silent: bool) -> Result<()> {
@@ -279,10 +338,7 @@ fn list_monitors(json: bool, silent: bool) -> Result<()> {
             let info: Vec<_> = monitors.iter().map(|m| m.info()).collect();
             println!("{}", serde_json::to_string_pretty(&info)?);
         } else {
-            println!(
-                "{:<20} {:<30} {}",
-                "Device Name", "Friendly Name", "Primary"
-            );
+            println!("{:<20} {:<30} Primary", "Device Name", "Friendly Name");
             println!("{}", "-".repeat(70));
             for mon in &monitors {
                 let info = mon.info();
@@ -300,7 +356,7 @@ fn list_monitors(json: bool, silent: bool) -> Result<()> {
 }
 
 fn get_brightness(device: Option<String>, primary: bool, json: bool, silent: bool) -> Result<()> {
-    let mon = get_monitor(device, primary)?;
+    let mon = get_monitor(device.as_deref(), primary)?;
     let brightness = mon.get_brightness()?;
 
     if !silent {
@@ -317,8 +373,15 @@ fn get_brightness(device: Option<String>, primary: bool, json: bool, silent: boo
     Ok(())
 }
 
-fn set_brightness(value: u32, device: Option<String>, primary: bool, silent: bool) -> Result<()> {
-    let mon = get_monitor(device, primary)?;
+fn set_brightness(
+    value: u32,
+    device: Option<String>,
+    primary: bool,
+    ignore_power_state: bool,
+    silent: bool,
+) -> Result<()> {
+    let mon = get_monitor(device.as_deref(), primary)?;
+    check_power_state(&mon, ignore_power_state, None)?;
     mon.set_brightness(value)?;
     if !silent {
         println!("Brightness set to {}", value);
@@ -327,7 +390,7 @@ fn set_brightness(value: u32, device: Option<String>, primary: bool, silent: boo
 }
 
 fn get_contrast(device: Option<String>, primary: bool, json: bool, silent: bool) -> Result<()> {
-    let mon = get_monitor(device, primary)?;
+    let mon = get_monitor(device.as_deref(), primary)?;
     let contrast = mon.get_contrast()?;
 
     if !silent {
@@ -344,8 +407,15 @@ fn get_contrast(device: Option<String>, primary: bool, json: bool, silent: bool)
     Ok(())
 }
 
-fn set_contrast(value: u32, device: Option<String>, primary: bool, silent: bool) -> Result<()> {
-    let mon = get_monitor(device, primary)?;
+fn set_contrast(
+    value: u32,
+    device: Option<String>,
+    primary: bool,
+    ignore_power_state: bool,
+    silent: bool,
+) -> Result<()> {
+    let mon = get_monitor(device.as_deref(), primary)?;
+    check_power_state(&mon, ignore_power_state, None)?;
     mon.set_contrast(value)?;
     if !silent {
         println!("Contrast set to {}", value);
@@ -360,7 +430,7 @@ fn get_vcp(
     json: bool,
     silent: bool,
 ) -> Result<()> {
-    let mon = get_monitor(device, primary)?;
+    let mon = get_monitor(device.as_deref(), primary)?;
     let vcp_mon = vcp::VcpMonitor::new(mon.handle());
     let response = vcp_mon.get_vcp_feature(code)?;
 
@@ -386,6 +456,7 @@ fn get_vcp(
     Ok(())
 }
 
+#[allow(clippy::too_many_arguments)]
 fn set_vcp(
     code: u8,
     value: u32,
@@ -393,6 +464,7 @@ fn set_vcp(
     primary: bool,
     retry: u32,
     retry_delay: u64,
+    ignore_power_state: bool,
     silent: bool,
 ) -> Result<()> {
     let max_attempts = retry.saturating_add(1);
@@ -401,7 +473,7 @@ fn set_vcp(
     for attempt in 1..=max_attempts {
         // Re-enumerate on every attempt — the monitor may not have been detected
         // on earlier attempts (e.g. display driver still initializing after resume).
-        match try_set_vcp(code, value, device.as_deref(), primary) {
+        match try_set_vcp(code, value, device.as_deref(), primary, ignore_power_state) {
             Ok(()) => {
                 if !silent {
                     println!("VCP code 0x{:02X} set to {}", code, value);
@@ -432,8 +504,15 @@ fn set_vcp(
 /// Single attempt at setting a VCP feature. Acquiring and releasing the physical
 /// monitor handle is scoped tightly here so that a failed attempt does not leave
 /// any handles open when the retry delay begins.
-fn try_set_vcp(code: u8, value: u32, device: Option<&str>, primary: bool) -> Result<()> {
-    let mon = get_monitor(device.map(|s| s.to_string()), primary)?;
+fn try_set_vcp(
+    code: u8,
+    value: u32,
+    device: Option<&str>,
+    primary: bool,
+    ignore_power_state: bool,
+) -> Result<()> {
+    let mon = get_monitor(device, primary)?;
+    check_power_state(&mon, ignore_power_state, Some(code))?;
     let vcp_mon = vcp::VcpMonitor::new(mon.handle());
     vcp_mon.set_vcp_feature(code, value)?;
     // `vcp_mon` drops here (no-op), then `mon` drops → DestroyPhysicalMonitor is
@@ -446,7 +525,7 @@ fn list_vcp(json: bool, silent: bool) -> Result<()> {
         if json {
             println!("{}", serde_json::to_string_pretty(&vcp::KNOWN_VCP_CODES)?);
         } else {
-            println!("{:<6} {:<30} {}", "Code", "Name", "Description");
+            println!("{:<6} {:<30} Description", "Code", "Name");
             println!("{}", "-".repeat(80));
             for info in vcp::KNOWN_VCP_CODES {
                 println!(
@@ -460,7 +539,7 @@ fn list_vcp(json: bool, silent: bool) -> Result<()> {
 }
 
 fn scan_vcp(device: Option<String>, primary: bool, json: bool, silent: bool) -> Result<()> {
-    let mon = get_monitor(device, primary)?;
+    let mon = get_monitor(device.as_deref(), primary)?;
     let vcp_mon = vcp::VcpMonitor::new(mon.handle());
 
     if !json && !silent {
@@ -475,8 +554,8 @@ fn scan_vcp(device: Option<String>, primary: bool, json: bool, silent: bool) -> 
         } else {
             eprintln!("Found {} supported VCP codes\n", features.len());
             println!(
-                "{:<6} {:<35} {:<12} {:<8} {}",
-                "Code", "Name", "CurrentValue", "MaxValue", "Description"
+                "{:<6} {:<35} {:<12} {:<8} Description",
+                "Code", "Name", "CurrentValue", "MaxValue"
             );
             println!("{}", "-".repeat(120));
 
@@ -501,7 +580,7 @@ fn scan_vcp(device: Option<String>, primary: bool, json: bool, silent: bool) -> 
 }
 
 fn get_capabilities(device: Option<String>, primary: bool, silent: bool) -> Result<()> {
-    let mon = get_monitor(device, primary)?;
+    let mon = get_monitor(device.as_deref(), primary)?;
     let vcp_mon = vcp::VcpMonitor::new(mon.handle());
     let caps = vcp_mon.get_capabilities()?;
     if !silent {
@@ -510,8 +589,14 @@ fn get_capabilities(device: Option<String>, primary: bool, silent: bool) -> Resu
     Ok(())
 }
 
-fn save_settings(device: Option<String>, primary: bool, silent: bool) -> Result<()> {
-    let mon = get_monitor(device, primary)?;
+fn save_settings(
+    device: Option<String>,
+    primary: bool,
+    ignore_power_state: bool,
+    silent: bool,
+) -> Result<()> {
+    let mon = get_monitor(device.as_deref(), primary)?;
+    check_power_state(&mon, ignore_power_state, None)?;
     let vcp_mon = vcp::VcpMonitor::new(mon.handle());
     vcp_mon.save_settings()?;
     if !silent {
@@ -524,9 +609,11 @@ fn reset_defaults(
     device: Option<String>,
     primary: bool,
     color_only: bool,
+    ignore_power_state: bool,
     silent: bool,
 ) -> Result<()> {
-    let mon = get_monitor(device, primary)?;
+    let mon = get_monitor(device.as_deref(), primary)?;
+    check_power_state(&mon, ignore_power_state, None)?;
     let vcp_mon = vcp::VcpMonitor::new(mon.handle());
 
     if color_only {
