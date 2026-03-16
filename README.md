@@ -1,41 +1,33 @@
 # MonitorConfig - Rust CLI
 
-A native Windows CLI tool for managing monitor settings via DDC/CI, written in Rust. This is a complete rewrite of the original PowerShell module.
+A native Windows CLI for managing monitor settings via DDC/CI.
+A complete Rust rewrite of the original PowerShell module.
 
 ## Features
 
-- **List Monitors**: Enumerate all connected monitors
-- **Brightness Control**: Get and set monitor brightness levels
-- **Contrast Control**: Get and set monitor contrast levels
-- **VCP Support**: Full VCP (VESA Command Protocol) feature access
-- **Monitor Capabilities**: Query monitor capabilities string
-- **Settings Management**: Save current settings or reset to factory defaults
-- **JSON Output**: All commands support JSON output for scripting
-- **Resume-safe Execution**: Built-in `--wait` and `--retry` flags for reliable post-sleep/hibernate automation
+- **List Monitors**: Enumerate all connected monitors.
+- **Brightness & Contrast**: Get and set levels.
+- **VCP Support**: Full VESA Command Protocol access.
+- **Capabilities**: Query monitor capabilities string.
+- **Settings**: Save or reset to factory defaults.
+- **JSON Output**: For easy scripting.
+- **Resume-safe**: `--wait` and `--retry` for post-sleep automation.
 
 ## Requirements
 
-- Windows 10/11 (uses dxva2.dll and user32.dll)
+- Windows 10/11
 - Rust 1.93.0+ (Edition 2024)
-- External monitors must support DDC/CI (enable in monitor OSD if needed)
+- DDC/CI enabled monitors
 
 ## Building
 
-### Prerequisites
-
-Install Rust from [rustup.rs](https://rustup.rs/):
-
-```bash
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-```
-
-### Build Release Version
+### Build Release
 
 ```bash
 cargo build --release
 ```
 
-The compiled binary will be at `target/release/monitorconfig.exe`
+Binary: `target/release/monitorconfig.exe`
 
 ### Install Globally
 
@@ -45,293 +37,100 @@ cargo install --path .
 
 ## Usage
 
-### List All Monitors
+### Examples
 
 ```bash
-monitorconfig list
-
-# JSON output
+# List monitors
 monitorconfig list --json
-```
 
-### Get Brightness
-
-```bash
-# Primary monitor
-monitorconfig get-brightness --primary
-
-# Specific monitor
-monitorconfig get-brightness --device "\\.\DISPLAY1"
-
-# JSON output
-monitorconfig get-brightness --primary --json
-```
-
-### Set Brightness
-
-```bash
-# Set primary monitor to 50%
+# Set primary brightness
 monitorconfig set-brightness 50 --primary
 
-# Set specific monitor
-monitorconfig set-brightness 75 --device "\\.\DISPLAY1"
-```
+# Set specific monitor contrast
+monitorconfig set-contrast 60 --device "\\.\\DISPLAY1"
 
-### Get Contrast
-
-```bash
-monitorconfig get-contrast --primary
-```
-
-### Set Contrast
-
-```bash
-monitorconfig set-contrast 60 --primary
-```
-
-### Get VCP Feature
-
-```bash
-# Get brightness (VCP code 0x10)
+# Get/Set VCP (0x10 = Brightness)
 monitorconfig get-vcp 0x10 --primary
-
-# Get power mode (VCP code 0xD6)
-monitorconfig get-vcp 0xD6 --primary --json
-```
-
-### Set VCP Feature
-
-```bash
-# Set brightness via VCP
-monitorconfig set-vcp 0x10 75 --primary
-
-# Turn off monitor (power mode = 4)
-monitorconfig set-vcp 0xD6 4 --primary
-
-# Set color temperature preset, with startup wait and retries (safe for Task Scheduler / post-resume)
-monitorconfig set-vcp 0x14 11 --device "Lenovo L22i-40" --wait 10 --retry 3 --retry-delay 8 --silent
+monitorconfig set-vcp 0xD6 4 --primary # Power Off
 ```
 
 #### `set-vcp` Options
 
-| Option                    | Short | Default | Description                                                                                                                                                                                                    |
-| ------------------------- | ----- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--device <NAME>`         | `-d`  | —       | Target monitor by device path or friendly name                                                                                                                                                                 |
-| `--primary`               | `-p`  | —       | Target the primary monitor                                                                                                                                                                                     |
-| `--wait <SECONDS>`        | `-w`  | `0`     | Sleep this many seconds **before** acquiring any monitor handle. Useful after resume from sleep/hibernate to give the monitor's DDC/CI firmware time to fully initialize before the first I²C command is sent. |
-| `--retry <COUNT>`         | —     | `0`     | Retry the command up to COUNT additional times if it fails                                                                                                                                                     |
-| `--retry-delay <SECONDS>` | —     | `5`     | Seconds to wait between retry attempts                                                                                                                                                                         |
-| `--silent`                | `-s`  | —       | Suppress all console output                                                                                                                                                                                    |
+| Option            | Short | Default | Description            |
+| ----------------- | ----- | ------- | ---------------------- |
+| `--device <NAME>` | `-d`  | —       | Target by path or name |
+| `--primary`       | `-p`  | —       | Target primary monitor |
+| `--wait <SEC>`    | `-w`  | `0`     | Delay before command   |
+| `--retry <COUNT>` | —     | `0`     | Retries on failure     |
+| `--retry-delay`   | —     | `5`     | Delay between retries  |
+| `--silent`        | `-s`  | —       | Suppress output        |
 
-> **Why `--wait` instead of a Task Scheduler trigger delay?**
-> The Task Scheduler `<Delay>` counts from when the _event fires_ (e.g. resume detected), not from when the display driver finishes restoring the monitor signal. The monitor's internal DDC/CI controller can take an additional 10–15 seconds after the display comes back before it accepts I²C commands. `--wait` delays _inside the process_, after the display driver is already up, giving a more reliable buffer. Sending a DDC/CI command to a monitor whose firmware MCU is still initializing can cause the monitor to hang and require a power cycle to recover.
+> **Note on `--wait`**: Useful after resume from sleep. Some monitors need
+> 10-15s to initialize DDC/CI after signal return. Using `--wait` prevents
+> commands from being sent too early, which can hang the monitor MCU.
 
-### List Known VCP Codes
+### VCP Codes
 
 ```bash
-# Show reference list of common VCP codes
+# Reference list
 monitorconfig list-vcp
 
-# JSON output
-monitorconfig list-vcp --json
-```
-
-### Scan Monitor for All Supported VCP Codes
-
-```bash
-# Scan primary monitor for all supported VCP codes
+# Scan supported codes on monitor
 monitorconfig scan-vcp --primary
-
-# Scan specific monitor
-monitorconfig scan-vcp --device "\\.\DISPLAY1"
-
-# JSON output for scripting
-monitorconfig scan-vcp --primary --json
 ```
-
-> **Note**: `list-vcp` shows a static reference list of common VCP codes, while `scan-vcp` actively queries your monitor to discover which codes it actually supports (similar to PowerShell's `Get-MonitorVCPResponse -All`).
-
-### Get Monitor Capabilities
-
-```bash
-monitorconfig get-capabilities --primary
-```
-
-### Save Settings
-
-```bash
-# Save current settings to monitor's memory
-monitorconfig save-settings --primary
-```
-
-### Reset to Factory Defaults
-
-```bash
-# Reset all settings
-monitorconfig reset-defaults --primary
-
-# Reset only color settings
-monitorconfig reset-defaults --primary --color-only
-```
-
-## Global Flags
-
-These flags work with every command:
-
-| Flag               | Short | Description                        |
-| ------------------ | ----- | ---------------------------------- |
-| `--silent`         | `-s`  | Suppress all console output        |
-| `--wait <SECONDS>` | `-w`  | Sleep before executing (see above) |
 
 ## Background Tasks / Task Scheduler
 
-When running MonitorConfig from Windows Task Scheduler or other background automation tools, use `--silent` to suppress console output and the `--wait` / `--retry` flags to handle timing issues around resume from sleep or hibernate.
+Use `--silent`, `--wait`, and `--retry` for reliable automation.
 
-### Silent Mode
-
-Use the global `--silent` (or `-s`) flag to suppress all console output:
+### Resume-safe Pattern
 
 ```bash
-monitorconfig set-vcp -d "Lenovo L22i-40" 0x14 11 --silent
-monitorconfig set-brightness 50 --primary -s
+# Delay 10s and retry 3 times if monitor is busy
+monitorconfig set-vcp -d "MonitorName" 0x14 11 -s --wait 10 --retry 3
 ```
 
-### Resume-safe Task Scheduler Pattern
+**Task Scheduler Tips:**
 
-Monitors can take 10–15 seconds after a sleep/hibernate resume before their DDC/CI controller is ready to accept commands. Sending a command too early may cause the monitor to hang (black screen requiring a power-cycle to recover).
+- **Trigger Delay**: Use small delay (2s); handle real delay with `--wait`.
+- **Execution Limit**: Set to ~2m to allow for retries.
+- **Instances**: Set to `IgnoreNew`.
 
-Use `--wait` to delay _inside the process_ and `--retry` to automatically re-attempt if the monitor is still not ready:
+### Hide Console Window
 
-```bash
-monitorconfig set-vcp -d "Lenovo L22i-40" 0x14 11 -s --wait 10 --retry 3 --retry-delay 8
-```
-
-**Recommended Task Scheduler settings for resume triggers:**
-
-| Setting                     | Recommended Value | Reason                                                                           |
-| --------------------------- | ----------------- | -------------------------------------------------------------------------------- |
-| Trigger `<Delay>`           | `PT2S`            | Just enough for the process to be schedulable; real delay is handled by `--wait` |
-| `<ExecutionTimeLimit>`      | `PT2M`            | Accommodates `--wait 10` + up to 3 retries × 8 s = ~50 s worst case              |
-| `<MultipleInstancesPolicy>` | `IgnoreNew`       | Prevents duplicate runs if multiple resume events fire simultaneously            |
-
-### Complete Console Window Suppression
-
-For Windows builds, you can compile the binary to completely hide the console window using Cargo features. This prevents even the brief flash when running from Task Scheduler.
-
-**Build with GUI subsystem** (no console window):
+Build with GUI subsystem to prevent the console flash:
 
 ```bash
 cargo build --release --features gui-subsystem
 ```
 
-For cross-compilation from Linux:
-
-```bash
-cargo build --release --target x86_64-pc-windows-gnu --features gui-subsystem
-```
-
-> **Note**: GUI subsystem builds produce no console output at all, including errors. Only use this for production automation where errors are logged elsewhere. For development and testing, use the standard build without the feature flag.
+_Note: GUI builds produce no console output or errors._
 
 ## Common VCP Codes
 
-| Code | Name                 | Description                   |
-| ---- | -------------------- | ----------------------------- |
-| 0x10 | Brightness           | Luminance of the image        |
-| 0x12 | Contrast             | Contrast of the image         |
-| 0x14 | Color Temperature    | Select color temperature      |
-| 0x16 | Red Video Gain       | Red video gain (drive)        |
-| 0x18 | Green Video Gain     | Green video gain (drive)      |
-| 0x1A | Blue Video Gain      | Blue video gain (drive)       |
-| 0x60 | Input Source         | Select input source           |
-| 0x62 | Audio Speaker Volume | Audio speaker volume          |
-| 0x8D | Audio Mute           | Audio mute/unmute             |
-| 0xD6 | Power Mode           | DPM/DPMS status (1=On, 4=Off) |
-
-## Examples
-
-### Set Multiple Monitors to Same Brightness
-
-```bash
-# List monitors and get device names
-monitorconfig list
-
-# Set each monitor
-monitorconfig set-brightness 80 --device "\\.\DISPLAY1"
-monitorconfig set-brightness 80 --device "\\.\DISPLAY2"
-```
-
-### Turn Off All Monitors
-
-```bash
-# Using VCP power mode command (value 4 = Off)
-monitorconfig set-vcp 0xD6 4 --device "\\.\DISPLAY1"
-monitorconfig set-vcp 0xD6 4 --device "\\.\DISPLAY2"
-```
-
-### Query Monitor Information
-
-```bash
-# Get all info in JSON format
-monitorconfig list --json > monitors.json
-monitorconfig get-brightness --primary --json >> monitors.json
-monitorconfig get-capabilities --primary >> capabilities.txt
-```
-
-### Re-apply Color Preset After Resume (BrightStay pattern)
-
-Some monitors (e.g. Lenovo L22i-40) reset certain VCP settings after waking from sleep. Use
-`--wait` and `--retry` to reliably re-apply the setting once the monitor's DDC/CI firmware is ready:
-
-```bash
-monitorconfig set-vcp -d "Lenovo L22i-40" 0x14 11 -s --wait 10 --retry 3 --retry-delay 8
-```
-
-Add this as a Task Scheduler action triggered by the resume/logon events
-(`Microsoft-Windows-Power-Troubleshooter` Event ID 1, `Microsoft-Windows-Kernel-Power` Event ID 507,
-`Microsoft-Windows-Winlogon` Event ID 7001).
+| Code | Name       | Description               |
+| ---- | ---------- | ------------------------- |
+| 0x10 | Brightness | Image luminance           |
+| 0x12 | Contrast   | Image contrast            |
+| 0x14 | Color Temp | Select preset             |
+| 0x60 | Input      | Select input source       |
+| 0xD6 | Power      | Power state (1=On, 4=Off) |
 
 ## Technical Details
 
 ### Architecture
 
-The tool is structured into several modules:
-
-- **native**: Low-level Windows API bindings (dxva2.dll, user32.dll)
-- **monitor**: Monitor abstraction and enumeration
-- **vcp**: VCP (Video Control Panel) feature implementation
-- **cli**: Command-line interface using clap
-- **error**: Centralized error handling
+- **native**: Windows API bindings (dxva2, user32).
+- **monitor**: Abstraction and enumeration.
+- **vcp**: Protocol implementation.
+- **cli**: Interface via `clap`.
 
 ### DDC/CI Support
 
-DDC/CI (Display Data Channel Command Interface) allows software control of monitor settings over the I²C bus embedded in the monitor cable. Most modern external monitors support it, but it may need to be enabled in the monitor's OSD (On-Screen Display) menu.
+Allows software control over I2C. Enable in OSD if needed. Some docks or
+cables (HDMI) may have limited support compared to DisplayPort.
 
-#### DDC/CI and Resume Timing
-
-After a system resumes from sleep or hibernate, the display driver may report the monitor as available before the monitor's internal MCU has finished its own power-on initialization. The DDC/CI I²C bus operates at ~100 kHz and the monitor firmware needs to be fully ready before it can correctly handle incoming commands. Issuing a `SetVCPFeature` command during this window can corrupt the monitor's MCU state, causing a black screen that requires a full power cycle to recover.
-
-The `--wait` flag addresses this by delaying command execution inside the process (after the OS-level display driver is already up), and `--retry` ensures that a transient failure during the initialization window does not cause the task to give up entirely.
-
-#### Troubleshooting DDC/CI
-
-1. Check if DDC/CI is enabled in monitor OSD
-2. Try different cable types (DisplayPort usually works better than HDMI)
-3. Update monitor firmware if available
-4. Some USB-C docks may not support DDC/CI
-5. If commands work manually but fail after resume, increase `--wait` in 5-second increments until reliable
-
-## Performance
-
-The Rust implementation provides several advantages over the PowerShell module:
-
-- **Faster startup**: No .NET CLR initialization overhead
-- **Lower memory usage**: Compiled binary vs interpreted PowerShell
-- **Native performance**: Direct Windows API calls without managed wrappers
-- **Smaller distribution**: Single ~1MB executable (release build)
-
-## Migration from PowerShell Module
-
-### Command Mapping
+## Migration from PowerShell
 
 | PowerShell Cmdlet        | Rust CLI Command               |
 | ------------------------ | ------------------------------ |
@@ -340,32 +139,12 @@ The Rust implementation provides several advantages over the PowerShell module:
 | `Set-MonitorBrightness`  | `monitorconfig set-brightness` |
 | `Get-MonitorVCPResponse` | `monitorconfig get-vcp`        |
 | `Set-MonitorVCPValue`    | `monitorconfig set-vcp`        |
-| `Get-MonitorDetails`     | `monitorconfig list --json`    |
-| `Save-MonitorSettings`   | `monitorconfig save-settings`  |
-| `Reset-MonitorSettings`  | `monitorconfig reset-defaults` |
-
-### Parameter Mapping
-
-| PowerShell Parameter | Rust CLI Option   |
-| -------------------- | ----------------- |
-| `-DeviceName`        | `--device`        |
-| `-Primary`           | `--primary`       |
-| `-VCPCode`           | First positional  |
-| `-Value`             | Second positional |
 
 ## License
 
-This project follows the same license as the original MonitorConfig PowerShell module (see LICENSE file).
-
-## Contributing
-
-Contributions are welcome! Areas for improvement:
-
-- [ ] Add WMI support for laptop internal displays
-- [ ] Add configuration file support
-- [ ] Add monitor profile save/restore
-- [ ] Cross-platform support exploration (Linux/macOS DDC support)
+Same as the original MonitorConfig PowerShell module.
 
 ## Acknowledgments
 
-Based on the [MonitorConfig PowerShell Module](https://github.com/MartinGC94/MonitorConfig) by Martin Gräßlin.
+Based on [MonitorConfig](https://github.com/MartinGC94/MonitorConfig)
+by Martin Gräßlin.
