@@ -31,7 +31,7 @@ jobs:
           components: rustfmt, clippy
 
       - name: Setup Rust Cache
-        uses: Swatinem/rust-cache@v2
+        uses: https://github.com/Swatinem/rust-cache@v2
         with:
           key: lint-x86_64-pc-windows-gnu
           save-if: true

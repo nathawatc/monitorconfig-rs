@@ -31,7 +31,7 @@ jobs:
           targets: x86_64-pc-windows-gnu
 
       - name: Setup Rust Cache
-        uses: Swatinem/rust-cache@v2
+        uses: https://github.com/Swatinem/rust-cache@v2
         with:
           # Use a specific cache key for the target to prevent cache poisoning
           key: target-x86_64-pc-windows-gnu
