@@ -1,0 +1,46 @@
+name: Lint and Formatting
+
+on:
+  pull_request:
+    branches: ["main", "master"]
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_BUILD_JOBS: 2
+
+jobs:
+  lint:
+    name: Code Quality Checks
+    runs-on: codeberg-medium
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Install MinGW-w64 Cross-Compiler
+        # Required to properly analyze Windows FFI bindings in the native.rs module
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-mingw-w64-x86-64
+
+      - name: Setup Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-gnu
+          components: rustfmt, clippy
+
+      - name: Setup Rust Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: lint-x86_64-pc-windows-gnu
+          save-if: true
+
+      - name: Check Formatting
+        run: cargo fmt --all -- --check
+
+      - name: Run Clippy (Standard)
+        run: cargo clippy --target x86_64-pc-windows-gnu --locked -- -D warnings
+
+      - name: Run Clippy (GUI Subsystem)
+        run: cargo clippy --target x86_64-pc-windows-gnu --features gui-subsystem --locked -- -D warnings

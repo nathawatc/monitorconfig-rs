@@ -1,0 +1,59 @@
+name: Build Release
+
+on:
+  pull_request:
+    branches: ["main", "master"]
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  # Limit Cargo's concurrency to prevent Out-Of-Memory (OOM) kills on the 8GB RAM constraint
+  # Since codeberg-medium has 4 cores, using 2-3 jobs keeps memory usage safer during LTO
+  CARGO_BUILD_JOBS: 2
+
+jobs:
+  build:
+    name: Build Windows Target
+    runs-on: codeberg-medium
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Install MinGW-w64 Cross-Compiler
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-mingw-w64-x86-64
+
+      - name: Setup Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-gnu
+
+      - name: Setup Rust Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          # Use a specific cache key for the target to prevent cache poisoning
+          key: target-x86_64-pc-windows-gnu
+          # Save cache even if the build fails, to speed up subsequent runs
+          save-if: true
+
+      - name: Build Standard Executable
+        run: |
+          cargo build --target x86_64-pc-windows-gnu --release --locked
+          mkdir -p dist
+          cp target/x86_64-pc-windows-gnu/release/monitorconfig.exe dist/monitorconfig.exe
+
+      - name: Build GUI Executable (Background mode)
+        run: |
+          # Clean the specific binary to ensure features are correctly applied
+          rm -f target/x86_64-pc-windows-gnu/release/monitorconfig.exe
+          cargo build --target x86_64-pc-windows-gnu --release --features gui-subsystem --locked
+          cp target/x86_64-pc-windows-gnu/release/monitorconfig.exe dist/monitorconfig-gui.exe
+
+      - name: Upload Artifacts
+        uses: forgejo/upload-artifact@v5
+        with:
+          name: monitorconfig-windows-binaries
+          path: dist/*.exe
+          retention-days: 7
