@@ -43,7 +43,7 @@ pub struct PhysicalMonitor {
 
 impl PhysicalMonitor {
     pub fn new(hmonitor: HMONITOR, physical_monitor: &native::PHYSICAL_MONITOR) -> Result<Self> {
-        let monitor_info = native::get_monitor_info(hmonitor)?;
+        let monitor_info = unsafe { native::get_monitor_info(hmonitor)? };
 
         // Extract the actual device name from MONITORINFOEXW.szDevice (e.g. \\.\DISPLAY1)
         let device_name = {
@@ -151,7 +151,7 @@ impl Monitor for PhysicalMonitor {
 
 impl Drop for PhysicalMonitor {
     fn drop(&mut self) {
-        let _ = native::destroy_physical_monitor(self.handle);
+        let _ = unsafe { native::destroy_physical_monitor(self.handle) };
     }
 }
 
@@ -168,7 +168,7 @@ pub fn enumerate_monitors() -> Result<Vec<PhysicalMonitor>> {
     let mut monitors = Vec::new();
 
     for hmonitor in enumerator.monitors {
-        let physical_monitors = native::get_physical_monitors(hmonitor)?;
+        let physical_monitors = unsafe { native::get_physical_monitors(hmonitor)? };
 
         for pm in &physical_monitors {
             match PhysicalMonitor::new(hmonitor, pm) {
@@ -176,7 +176,7 @@ pub fn enumerate_monitors() -> Result<Vec<PhysicalMonitor>> {
                 Err(e) => {
                     // PhysicalMonitor was not created, so its Drop will not
                     // run. Explicitly destroy the handle to avoid a leak.
-                    let _ = native::destroy_physical_monitor(pm.h_physical_monitor);
+                    let _ = unsafe { native::destroy_physical_monitor(pm.h_physical_monitor) };
                     eprintln!("Warning: Failed to create monitor: {e}");
                 }
             }
@@ -196,8 +196,7 @@ pub fn find_monitor(device_name: &str) -> Result<PhysicalMonitor> {
         .into_iter()
         .find(|m| {
             let info = m.info();
-            info.device_name.to_lowercase() == needle
-                || info.friendly_name.to_lowercase() == needle
+            info.device_name.to_lowercase() == needle || info.friendly_name.to_lowercase() == needle
         })
         .ok_or_else(|| crate::MonitorError::MonitorNotFound(device_name.to_string()))
 }
