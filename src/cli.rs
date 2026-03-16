@@ -338,10 +338,7 @@ fn list_monitors(json: bool, silent: bool) -> Result<()> {
             let info: Vec<_> = monitors.iter().map(|m| m.info()).collect();
             println!("{}", serde_json::to_string_pretty(&info)?);
         } else {
-            println!(
-                "{:<20} {:<30} Primary",
-                "Device Name", "Friendly Name"
-            );
+            println!("{:<20} {:<30} Primary", "Device Name", "Friendly Name");
             println!("{}", "-".repeat(70));
             for mon in &monitors {
                 let info = mon.info();

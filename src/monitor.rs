@@ -44,7 +44,10 @@ pub struct PhysicalMonitor {
 impl PhysicalMonitor {
     /// # Safety
     /// `hmonitor` must be a valid `HMONITOR` handle.
-    pub unsafe fn new(hmonitor: HMONITOR, physical_monitor: &native::PHYSICAL_MONITOR) -> Result<Self> {
+    pub unsafe fn new(
+        hmonitor: HMONITOR,
+        physical_monitor: &native::PHYSICAL_MONITOR,
+    ) -> Result<Self> {
         let monitor_info = unsafe { native::get_monitor_info(hmonitor)? };
 
         // Extract the actual device name from MONITORINFOEXW.szDevice (e.g. \\.\DISPLAY1)
