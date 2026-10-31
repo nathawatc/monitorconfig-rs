@@ -1,12 +1,11 @@
 [package]
 name = "monitorconfig"
 version = "1.3.0"
-authors = ["nathawat <nathawat@noreply.codeberg.org>"]
 edition = "2024"
 description = "Native Windows CLI tool for managing monitor settings via DDC/CI"
-documentation = "https://codeberg.org/nathawat/monitorconfig-rs/src/branch/main/docs"
+documentation = "https://github.com/nathawatc/monitorconfig-rs/src/branch/main/docs"
 readme = "README.md"
-repository = "https://codeberg.org/nathawat/monitorconfig-rs"
+repository = "https://github.com/nathawatc/monitorconfig-rs"
 license = "MIT"
 keywords = ["monitor", "display", "brightness", "ddc-ci", "windows"]
 categories = ["command-line-utilities", "hardware-support", "os::windows-apis"]
